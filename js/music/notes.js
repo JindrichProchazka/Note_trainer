@@ -42,3 +42,13 @@ export function naturalNotesBetween(minMidi, maxMidi) {
   }
   return Object.freeze(notes);
 }
+
+/** Parse canonical written spelling without using the presentation convention. */
+export function parseWrittenNote(value) {
+  if (typeof value !== 'string') throw new RangeError('Invalid written note');
+  const match = /^([A-G])([♭♯]?)(-?\d+)$/.exec(value);
+  if (!match) throw new RangeError('Invalid written note');
+  const note = createNote(match[1], Number(match[3]), match[2] === '♭' ? -1 : match[2] === '♯' ? 1 : 0);
+  if (writtenName(note) !== value) throw new RangeError('Noncanonical written note');
+  return note;
+}

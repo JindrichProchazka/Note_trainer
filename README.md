@@ -1,7 +1,7 @@
 # NoteTrainer
 
 A lightweight piano note-reading trainer built with HTML, CSS and vanilla JavaScript.
-**Milestones 1 and 2 are implemented.** No production build, backend, account,
+**Milestones 1, 2 and 3 are implemented.** No production build, backend, account,
 external font or runtime dependency is required.
 
 ## Launch locally
@@ -91,8 +91,8 @@ Finish opens a dedicated summary with:
 Empty sessions and sessions without a correct answer show a dash for undefined
 accuracy/response measures. Correct notes per minute safely displays zero.
 You can repeat the same configuration, choose a different session, or return Home.
-Starting another session requires confirmation before replacing recorded answers
-and their summary.
+Starting another session asks for confirmation when unfinished practice contains
+answers. Its saved evidence remains in history.
 
 Response timing uses `performance.now()` after notation is rendered and ready.
 Feedback and pauses are excluded from individual response times. Active practice
@@ -100,70 +100,96 @@ duration includes visible feedback and excludes pauses. Timed duration is capped
 at the exact limit even if a browser callback is delayed. Count sessions freeze
 their duration on the last answer, show its feedback, then open the summary.
 
-## Settings and storage
+## Settings, persistence and Statistics
 
-Settings saves theme (light, dark or system), default naming, default preset and
-default session type on the current browser/device. The header theme selector
-updates the same saved preference. Practice defaults apply to **new sessions**;
-a session keeps its configuration. Theme changes apply immediately.
+Settings saves light/dark/system theme, naming, default preset and session type.
+Defaults apply to new sessions; themes change immediately. Milestone 2 preferences
+remain at `notetrainer.settings`, schema 1, including compatible unknown fields.
 
-Preferences use a dedicated LocalStorage key, `notetrainer.settings`:
+Learning data uses a separate **schema 2** manifest and one atomic LocalStorage
+document per session. Every valid answer is saved immediately; completion never
+duplicates it. Reload/close keeps saved attempts and marks unfinished practice
+interrupted when its prior tab can be identified. Interrupted/unfinished evidence
+contributes to practice measures but never to completed-session counts. Practice
+does not resume automatically after reload.
 
-```json
-{
-  "schemaVersion": 1,
-  "settings": {
-    "theme": "system",
-    "naming": "czech",
-    "defaultPreset": "treble-basic",
-    "defaultSessionType": "unlimited"
-  }
-}
-```
+**Statistics** contains:
 
-Compatible unknown fields are preserved. Malformed data and unsupported schema
-versions are never silently overwritten, including data changed by another tab
-after startup. Unavailable/full storage falls back to preferences for the current
-visit and displays a notice. Storage belongs to the site's origin: local and
-published installations have separate preferences.
+- Overview: active time, answered/correct/incorrect, accuracy, correct median,
+  correct notes/minute, completed sessions, distinct and mastered contexts.
+- Today, last 7 days, last 30 days and All time, plus clef, exercise, input and
+  configuration filters. Combined configurations are explicitly identified.
+- Sortable note performance: exact written pitch/octave/clef/context, counts,
+  accuracy, correct median, recent accuracy, last practice and learning state.
+- Treble/bass staff views, readable octave groups, U/L/F/M markers, textual legend
+  and note inspection using the same notation geometry as practice.
+- Five daily charts with accessible exact values, honest performance gaps and
+  30-day chart pages for long histories.
+- Completed/interrupted/unfinished history, old summaries and original
+  configuration repeat as a new session without changing historical results.
 
-**Attempts, session summaries and learning history are not persisted.**
-Reloading clears the current session; saved preferences remain.
-Milestone 3 can integrate this settings-only adapter through an explicit schema
-migration without clearing the key or introducing learning storage prematurely.
+Home keeps Quick Start prominent and adds real Today time/answers, last-seven-day
+accuracy/correct median and the recently used configuration.
 
-## Automated tests
+Accuracy is correct/answered. Medians use individual correct attempts.
+Correct notes/minute uses active time, including feedback and excluding pauses.
+Empty accuracy/median and rates without recorded time show a dash. Date filters
+use inclusive local calendar days. History cards explicitly show whole-session
+results; date/clef filters select relevant cards.
+
+Mastery is recalculated per exact context within the selected filters:
+
+| State | Evidence |
+| --- | --- |
+| Unseen | No attempts |
+| Learning | Practiced, below Familiar/Mastered |
+| Familiar | >=5 attempts, >=80% correct in latest 10 or all available |
+| Mastered | >=20 attempts, >=95% in latest 20, correct median <1000 ms in that window |
+
+Mastered takes precedence and can decrease with recent mistakes/slower responses.
+There is no adaptive question selection.
+
+Malformed/unsupported data is preserved. Storage problems display a notice;
+new evidence remains in memory and **Retry saving** revalidates before writing.
+Full storage never triggers automatic history deletion. Unsaved evidence cannot
+survive reload. LocalStorage is finite, synchronous and specific to origin,
+browser and device; large histories can become slow. Private browsing, clearing
+site data or browser eviction can remove browser-managed data. Different local
+ports and the published site have separate histories. Abrupt termination can
+lose the latest active-time checkpoint or leave an Unfinished record.
+
+No backup, restore, destructive reset or cloud sync is included.
+See [the schema, migration and complete metric definitions](docs/STORAGE_SCHEMA.md).
+
+## Automated tests and validation
 
 ```powershell
 cd C:\Users\jindr\Documents\Note_trainer\Note_trainer
 npm.cmd test
 ```
 
-**95 tests pass** using Node's built-in test runner. The original 40-test
-Milestone 1 suite remains in place.
+**139 tests pass**, including all 95 Milestone 1/2 tests. Node's built-in runner
+covers music/ledger geometry, generation, naming, session timing and limits,
+settings, schemas/migrations, immediate evidence/deduplication, interruption,
+storage failure/retry, context separation, filtered/weighted metrics, dates,
+mastery/degradation, history, Home, rendered views and all JS/CSS resources
+served under the GitHub Pages project subpath.
 
-Tests cover MIDI/spelling, both clefs and all supported staff positions,
-extended ledger lines and stems, range filtering, every preset, independent mixed
-ranges, deterministic generation, naming/keyboard mapping, session deadlines,
-count completion, duplicates, pause/resume, summaries, settings validation and
-persistence, rendered screen content, and HTTP loading of every application
-module beneath `/Note_trainer/`.
+Embedded Chromium validation on **2026-11-24** exercised empty/populated
+Statistics, actual practice recording, reload persistence, preservation of M2
+preferences, repeat/history, both clefs/naming systems, charts/filters, Home,
+light/dark and responsive mobile/desktop layouts. No horizontal overflow or
+critical console errors were observed. Validation data used isolated port 5174.
 
-Browser validation on **2026-11-24** used the embedded Chromium browser.
-All presets, all session types, both naming conventions, reload persistence,
-empty/all-wrong summaries, repeat/cancel/navigation, both clefs and extreme ledger
-positions were exercised. All screens fit at 320 and 1280 pixels, with practice
-also checked at 375, 390, 540, 640 and 768 pixels. No horizontal overflow or
-critical console errors were observed.
+See [the M3 validation report, file inventory and manual checks](docs/validation/MILESTONE_3.md),
+[desktop overview](docs/validation/m3-desktop-overview.jpg) and
+[mobile note view](docs/validation/m3-mobile-notes.jpg).
+[The M2 report](docs/validation/MILESTONE_2.md) records the earlier baseline.
 
-See [the full validation report and file inventory](docs/validation/MILESTONE_2.md),
-[mobile bass practice](docs/validation/m2-mobile-bass.jpg), and
-[desktop summary](docs/validation/m2-desktop-summary.jpg).
-
-Physical iPhone/Android touch, Safari/Firefox, browser restart, and actual
-background-tab visibility transitions have not been tested. The embedded browser
-emulates a focused page; countdown pause/resume was checked through the UI and
-hidden-time exclusion is covered by deterministic session tests.
+Physical touch devices, Safari/Firefox, browser/OS restart, actual background-tab
+transitions and published hosting remain untested. Corrupt/denied/full storage,
+multi-day history and exact mastery boundaries use deterministic automated
+fixtures; they were not injected into browser storage.
 
 ## Architecture and musical accuracy
 
@@ -172,13 +198,14 @@ hidden-time exclusion is covered by deterministic session tests.
 - `js/exercises/`: validated immutable configurations, centralized preset
   application, procedural generation and letter validation.
 - `js/session/`: DOM-independent session state machine and derived session results.
-- `js/data/settings.js`: versioned settings-only persistence adapter.
-- `js/ui/`: Home, configuration, Practice, Settings and summary screens,
+- `js/data/`: isolated settings, validated versioned learning storage, migrations and recording adapters.
+- `js/learning/`: DOM-independent context identity, dates, mastery and statistics.
+- `js/ui/`: Home, configuration, Practice, Settings, Statistics/history/note views and summaries,
   display/input naming conversion, formatting and centralized English copy.
 - `js/app.js`: application state, input, navigation, preferences and scheduling.
 - `css/`: existing responsive layout, reusable controls, forms and theme variables.
 - `scripts/serve.mjs`: development-only static server using Node's built-ins.
-- `tests/`: automated regression and Milestone 2 tests.
+- `tests/`: automated regression and Milestone 2/3 tests.
 
 Treble uses E4/F5 as bottom/top staff lines; bass uses G2/A3.
 Vertical placement uses diatonic steps, never semitone distance. Ledger lines occur
@@ -200,9 +227,8 @@ All production resource URLs and imports are relative. Navigation uses fragments
 so the repository root works under **/Note_trainer/** without a build or URL rewrite.
 The local server deliberately provides that project subpath for testing.
 
-Milestone 2 changes are local and have not been committed, pushed or published.
-Milestone 3 learning persistence, long-term statistics and mastery are deferred,
-along with subsequent sequence, piano and adaptive modes.
+Milestone 3 changes are local and have not been committed, pushed or published.
+Subsequent sequence, piano and adaptive modes remain deferred.
 
 PWA installation, a manifest, service worker, and offline caching remain scheduled
 for Milestone 7. Static files must currently be available when opening/reloading.

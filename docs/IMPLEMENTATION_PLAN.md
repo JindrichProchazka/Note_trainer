@@ -1344,7 +1344,7 @@ Milestone 1: Complete (2026-11-24)
 
 Milestone 2: Complete (2026-11-24)
 
-Milestone 3: Not started
+Milestone 3: Complete (2026-11-24)
 
 Milestone 4: Not started
 
@@ -1358,7 +1358,7 @@ Milestone 8: Not started
 
 
 
-Currently authorized milestone: Milestone 2 only, including explicitly requested settings persistence.
+Currently authorized milestone: Milestone 3 only, including the explicitly requested basic mastery classification and historical charts.
 
 
 
@@ -1454,3 +1454,44 @@ relative resource loading was verified locally under /Note_trainer/.
 
 Milestones 3–8 remain not started. PWA/offline functionality remains in Milestone 7.
 No commits, pushes or publication were performed.
+
+
+### Milestone 3 implementation notes — 2026-11-24
+
+Milestone 3 — Persistence and Statistics is complete. The explicit user request
+authorized basic evidence-derived mastery and historical charts in this milestone;
+adaptive selection and subsequent exercises remain deferred.
+
+- Implemented isolated versioned learning storage, explicit validation/migrations,
+  immediate independent answers, append-only deduplication, atomic per-session
+  documents, interrupted/unfinished evidence and immutable historical results.
+- Preserved M2 preferences at their existing settings key/schema without rewriting
+  them. Corrupt/future/quota/denied/conflicting storage is reported and retained;
+  pending evidence remains in memory and can be retried without deleting history.
+- Added DOM-independent exact-context statistics, inclusive local calendar filters,
+  clef/type/input/configuration comparisons, individual correct medians, weighted
+  accuracy, active-time denominators and daily aggregation with missing performance
+  data on unpracticed days.
+- Added Statistics navigation, ten overview metrics, five accessible native SVG
+  charts, sortable note performance, separate clef/octave mastery staves using the
+  existing notation engine, text/letter state indicators and note inspection.
+- Added centrally configurable Unseen/Learning/Familiar/Mastered rules, recalculated
+  from recent evidence and able to degrade. No adaptive generation was introduced.
+- Added saved session history, summaries and configuration repeat with new IDs;
+  Home now shows persisted Today/recent measures and recently used configuration.
+- Documented storage schema, migration behavior, metrics and capacity/crash limits
+  in docs/STORAGE_SCHEMA.md. Full validation and incremental file inventory are in
+  docs/validation/MILESTONE_3.md.
+
+Validation: baseline 95 tests passed; final suite 139/139 passed on Node.js
+24.20.0. Browser checks under /Note_trainer/ used isolated port 5174 and covered
+empty/populated Statistics, saved M2 defaults, correct/incorrect recording,
+completion/reload, interrupted evidence, immutable old summaries/repeat, both
+clefs/naming systems, filters/charts, Home and mobile/desktop themes/layouts.
+Physical mobile devices, Safari/Firefox, OS/browser restart and actual hidden-tab
+transitions remain unverified. Storage failures, multi-day boundaries and exact
+mastery/degradation are validated with automated fixtures.
+
+Milestones 4–8 remain not started. No sequences, virtual piano, adaptive selection,
+backup/restore/reset or offline PWA were implemented. No commits, pushes or
+publication were performed.

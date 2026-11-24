@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readdir } from 'node:fs/promises';
 import { createStaticServer } from '../scripts/serve.mjs';
 
 test('static app and every module load correctly at a GitHub Pages project subpath', async t => {
@@ -7,32 +8,13 @@ test('static app and every module load correctly at a GitHub Pages project subpa
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   t.after(() => new Promise(resolve => server.close(resolve)));
   const origin = `http://127.0.0.1:${server.address().port}`;
-  const resources = [
-    ['/', 'text/html'], ['/Note_trainer/', 'text/html'],
-    ['/Note_trainer/css/style.css', 'text/css'],
-    ['/Note_trainer/css/themes.css', 'text/css'],
-    ['/Note_trainer/css/components.css', 'text/css'],
-    ['/Note_trainer/js/app.js', 'text/javascript'],
-    ['/Note_trainer/js/config.js', 'text/javascript'],
-    ['/Note_trainer/js/music/notes.js', 'text/javascript'],
-    ['/Note_trainer/js/music/notation.js', 'text/javascript'],
-    ['/Note_trainer/js/exercises/generator.js', 'text/javascript'],
-    ['/Note_trainer/js/exercises/single-note.js', 'text/javascript'],
-    ['/Note_trainer/js/session/session.js', 'text/javascript'],
-    ['/Note_trainer/js/session/statistics.js', 'text/javascript'],
-    ['/Note_trainer/js/ui/home.js', 'text/javascript'],
-    ['/Note_trainer/js/ui/practice.js', 'text/javascript'],
-    ['/Note_trainer/js/ui/strings.js', 'text/javascript'],
-    ['/Note_trainer/js/ui/format.js', 'text/javascript'],
-    ['/Note_trainer/js/music/clefs.js', 'text/javascript'],
-    ['/Note_trainer/js/exercises/configuration.js', 'text/javascript'],
-    ['/Note_trainer/js/data/settings.js', 'text/javascript'],
-    ['/Note_trainer/js/ui/note-names.js', 'text/javascript'],
-    ['/Note_trainer/js/ui/config-description.js', 'text/javascript'],
-    ['/Note_trainer/js/ui/configuration.js', 'text/javascript'],
-    ['/Note_trainer/js/ui/settings.js', 'text/javascript'],
-    ['/Note_trainer/js/ui/summary.js', 'text/javascript'],
-  ];
+  const resources = [['/', 'text/html'], ['/Note_trainer/', 'text/html']];
+  for (const directory of ['css', 'js']) {
+    const paths = await readdir(new URL(`../${directory}/`, import.meta.url), { recursive: true });
+    for (const path of paths.filter(path => /\.(css|js)$/.test(path))) {
+      resources.push([`/Note_trainer/${directory}/${path.replaceAll('\\', '/')}`, directory === 'css' ? 'text/css' : 'text/javascript']);
+    }
+  }
   for (const [resource, mime] of resources) {
     const response = await fetch(origin + resource);
     assert.equal(response.status, 200, resource);

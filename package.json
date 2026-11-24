@@ -1,6 +1,6 @@
 {
   "name": "note-trainer",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "description": "Dependency-free piano note recognition practice.",
