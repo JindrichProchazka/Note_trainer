@@ -116,3 +116,23 @@ export function renderSequenceSystem(entries, label, clef = 'treble') {
     }).join('')}
   </svg>`;
 }
+/** Read-only line/space reference; shares the practice staff, clefs and pitch geometry. */
+export function renderReferenceStaff(groups, label, clef = 'treble') {
+  return `<svg class="notation reference-notation" viewBox="20 20 320 ${clef === 'treble' ? 196 : 154}"
+    data-clef="${clef}" role="img" aria-label="${escapeText(label)}" xmlns="http://www.w3.org/2000/svg">
+    ${staffMarkup(330)}${CLEFS[clef].svg}
+    ${groups.map((group, index) => {
+      const x = 160 + index * 100;
+      return `<g class="reference-column">
+        <text class="reference-column-label" x="${x + 23}" y="40" text-anchor="middle">${escapeText(group.label)}</text>
+        ${group.notes.map(note => {
+          const { y, position } = notationLayout(note, clef);
+          return `<g class="reference-note" data-position="${position}">
+            <ellipse class="notehead" cx="${x}" cy="${y}" rx="13" ry="9" transform="rotate(-20 ${x} ${y})" fill="currentColor"/>
+            <text class="reference-note-label" x="${x + 21}" y="${y}" dominant-baseline="central">${escapeText(note.letter)}<tspan class="reference-octave">${note.octave}</tspan></text>
+          </g>`;
+        }).join('')}
+      </g>`;
+    }).join('')}
+  </svg>`;
+}

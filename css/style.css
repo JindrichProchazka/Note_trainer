@@ -48,13 +48,22 @@ main { max-width: 1088px; padding: 24px 20px 40px; margin: 0 auto; min-height: c
 .home-intro { max-width: 630px; margin-bottom: 28px; }
 .home-intro .eyebrow { margin-bottom: 14px; }
 .lead { color: var(--muted); font-size: 1rem; max-width: 500px; margin-top: 18px; line-height: 1.7; }
-.home-grid { display: grid; gap: 16px; }
+.home-grid { display: grid; gap: 16px; align-items: start; }
 .exercise-card { padding: 25px; display: flex; flex-direction: column; }
 .exercise-card h2 { margin: 12px 0; font-size: 1.5rem; }
 .exercise-card > .muted { max-width: 360px; }
-.preview-card { padding: 18px 22px; background: var(--surface-soft); }
-.preview-card .notation { max-height: 210px; }
-.preview-card figcaption { color: var(--muted); text-align: center; font-size: .8rem; margin: -6px 0 2px; }
+.reference-card { min-width: 0; padding: 20px; background: var(--surface-soft); }
+.reference-card h2 { font-size: 1.1rem; }
+.reference-hint { margin-top: 8px; font-size: .75rem; }
+.reference-clef { margin-top: 18px; }
+.reference-clef + .reference-clef { border-top: 1px solid var(--line); padding-top: 16px; }
+.reference-clef h3 { margin: 0; font-size: .95rem; font-weight: 650; }
+.reference-notation { max-width: 280px; max-height: none; margin: 4px auto 0; }
+.reference-column-label { font-size: 16px; font-weight: 600; fill: var(--muted); }
+.reference-note-label { font-size: 20px; font-weight: 650; fill: var(--ink); paint-order: stroke; stroke: var(--surface-soft); stroke-width: 4px; stroke-linejoin: round; }
+.reference-octave { font-size: 15px; }
+.reference-mnemonics { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 10px; margin-top: 4px; font-size: .8rem; }
+.reference-mnemonics dt { color: var(--muted); }
 .session-section { margin-top: 36px; }
 .section-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 18px; }
 .section-heading .muted { font-size: .85rem; margin-top: 7px; }
@@ -75,13 +84,14 @@ main { max-width: 1088px; padding: 24px 20px 40px; margin: 0 auto; min-height: c
   nav { order: 0; width: auto; margin-left: 20px; }
   .theme-control > span { display: inline; }
   main { padding: 48px 32px 52px; min-height: calc(100svh - 160px); }
-  .home-grid { grid-template-columns: 1.15fr 1fr; gap: 22px; }
+  .home-grid { gap: 22px; }
   .exercise-card { padding: 32px; }
-  .preview-card { display: flex; flex-direction: column; justify-content: center; padding: 24px; }
-  .preview-card .eyebrow { margin-bottom: 4px; }
   .home-intro { margin-bottom: 36px; }
   .app-footer { padding-left: 32px; padding-right: 32px; }
   .app-footer span + span { display: inline; }
+}
+@media (min-width: 800px) {
+  .home-grid { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); }
 }
 @media (max-width: 360px) {
   main { padding-left: 14px; padding-right: 14px; }

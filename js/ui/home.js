@@ -1,25 +1,40 @@
 import { PIANO } from './piano-strings.js';
 import { SEQ } from './sequence-strings.js';
-import { naturalNotesBetween } from '../music/notes.js';
-import { renderNotation } from '../music/notation.js';
+import { parseWrittenNote } from '../music/notes.js';
+import { renderReferenceStaff } from '../music/notation.js';
 import { TEXT } from './strings.js';
 import { STATS } from './statistics-strings.js';
-import { noteName } from './note-names.js';
 import { presetOptions } from './configuration.js';
 import { configurationDescription, sessionDescription, exerciseDescription } from './config-description.js';
 import { formatAccuracy, formatDuration, formatResponse } from './format.js';
 import { escapeHtml as h } from './html.js';
 
+const REFERENCE_PITCHES = {
+  treble: { lines: ['E4', 'G4', 'B4', 'D5', 'F5'], spaces: ['F4', 'A4', 'C5', 'E5'] },
+  bass: { lines: ['G2', 'B2', 'D3', 'F3', 'A3'], spaces: ['A2', 'C3', 'E3', 'G3'] },
+};
+function referenceCard(naming) {
+  return `<aside class="card reference-card" aria-labelledby="reference-title">
+    <h2 id="reference-title">${TEXT.referenceTitle}</h2>
+    <p class="reference-hint muted">${TEXT.referenceHint}${naming === 'czech' ? ' ' + TEXT.referenceCzechHint : ''}</p>
+    ${Object.entries(REFERENCE_PITCHES).map(([clef, pitches]) => {
+      const groups = Object.entries(pitches).map(([kind, notes]) => ({
+        label: TEXT.referenceKinds[kind], notes: notes.map(parseWrittenNote),
+      }));
+      return `<section class="reference-clef" aria-labelledby="reference-${clef}">
+        <h3 id="reference-${clef}">${TEXT.clefs[clef]}</h3>
+        ${renderReferenceStaff(groups, TEXT.referenceStaffLabel(TEXT.clefs[clef], pitches.lines.join(', '), pitches.spaces.join(', ')), clef)}
+        <dl class="reference-mnemonics">${Object.keys(pitches).map(kind =>
+          `<dt>${TEXT.referenceKinds[kind]}</dt><dd>${TEXT.referenceMnemonics[clef][kind]}</dd>`).join('')}</dl>
+      </section>`;
+    }).join('')}
+  </aside>`;
+}
 export function homeMarkup(session, quickConfig, persistent = null) {
   const current = session.statistics;
   const today = persistent?.today ?? current;
   const recent = persistent?.recent ?? { accuracy: current.accuracy, medianCorrectResponseMs: session.summary.medianCorrectResponseMs };
   const recentConfig = persistent?.recentConfig;
-  const clef = quickConfig.clef === 'mixed' ? 'treble' : quickConfig.clef;
-  const range = quickConfig.ranges[clef];
-  const notes = naturalNotesBetween(range.minMidi, range.maxMidi);
-  const example = notes[Math.floor(notes.length / 2)];
-  const exampleName = noteName(example, quickConfig.naming);
   return `<section class="home-view" aria-labelledby="home-title">
     <div class="home-intro">
       <p class="eyebrow">${TEXT.eyebrow}</p>
@@ -42,10 +57,7 @@ export function homeMarkup(session, quickConfig, persistent = null) {
           <button class="button subtle" data-action="customize">${TEXT.customize}</button>
         </div>
       </section>
-      <figure class="card preview-card"><p class="eyebrow">${TEXT.example}</p>
-        ${renderNotation(example, TEXT.exampleLabel(exampleName, TEXT.clefs[clef]), clef)}
-        <figcaption>${TEXT.exampleCaption(exampleName, TEXT.clefs[clef])}</figcaption>
-      </figure>
+      ${referenceCard(quickConfig.naming)}
     </div>
     <section class="session-section" aria-labelledby="session-title">
       <div class="section-heading"><div><h2 id="session-title">${STATS.today}</h2>
