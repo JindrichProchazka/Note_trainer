@@ -1,3 +1,4 @@
+import { midiNote } from '../music/piano.js';
 // Presentation and answer input only. Music and recorded answers always use international letters.
 import { LETTERS } from '../music/notes.js';
 
@@ -30,3 +31,5 @@ export function keyboardAnswer(key, naming = 'international') {
   }
   return LETTERS.includes(letter) ? letter : null;
 }
+
+export const answerName = (answer,naming) => typeof answer === 'number' ? noteName(midiNote(answer),naming) : letterName(answer,naming);

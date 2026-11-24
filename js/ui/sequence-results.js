@@ -1,6 +1,6 @@
 import { SEQ } from './sequence-strings.js';
 import { TEXT } from './strings.js';
-import { letterName, writtenNoteName } from './note-names.js';
+import { answerName, letterName, writtenNoteName } from './note-names.js';
 import { formatAccuracy, formatResponse } from './format.js';
 import { escapeHtml as h } from './html.js';
 
@@ -14,7 +14,7 @@ export function sequenceResultsMarkup(summary, naming) {
       <summary>${SEQ.sequence} ${result.ordinal} · ${result.answered} / ${result.notes.length} ·
         ${result.complete ? SEQ.completedState : result.partial ? SEQ.partialState : SEQ.unansweredState}</summary>
       <p class="muted">${TEXT.clefs[result.clef]} · ${formatAccuracy(result.accuracy)} · ${formatResponse(result.answerDurationMs)} ${SEQ.answerTime.toLowerCase()}</p>
-      <ol>${result.answers.map(answer => `<li>${answer.itemIndex + 1}. ${letterName(answer.answer, naming)} ·
+      <ol>${result.answers.map(answer => `<li>${answer.itemIndex + 1}. ${answerName(answer.answer, naming)} ·
         ${h(answer.correct ? SEQ.correct : SEQ.incorrect(writtenNoteName(answer.writtenNote, naming)))}
         · ${formatResponse(answer.responseTimeMs)}</li>`).join('')}</ol>
     </details>`).join('')}

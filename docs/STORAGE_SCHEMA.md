@@ -244,3 +244,32 @@ Home/Statistics/saved routes temporarily omit the current session while a delaye
 sequence has pending answers, with an explanatory notice. Review or session end
 reveals results. Reload interrupts the session and retains partial evidence.
 Quarter notes indicate pitch order only; no rhythm is assessed.
+
+## Milestones 5–6 additions
+
+Schema remains 2. Piano uses inputMethod piano with an integer MIDI answer;
+validation checks exact MIDI correctness and configured keyboard bounds.
+Optional config fields keyboardMin/keyboardMax/noteLabels describe the keyboard.
+Old letter records, recognition IDs, settings and v1 migrations are retained.
+Comparison keys additionally identify piano hints/range and non-uniform
+selectionMode; context IDs remain written pitch + clef + exercise + input.
+
+Adaptive rules live in js/learning/adaptive.js (ADAPTIVE_RULES).
+For each exact context, use the latest 20 independent answers:
+w = 1 + 4*(1-accuracy) + 2*clamp(correctMedian/target-1,0,1)
+    + 2*(1-min(totalAttempts/20,1)) + 2*min(daysSincePractice/14,1)
+    + (Learning state ? 1 : 0).
+Unseen accuracy defaults to 0.5; absent correct median contributes no speed term,
+and unseen recency contributes zero. Targets are 1000 ms for isolated notes and
+500 ms for sequences. Weak focus adds 8 for unseen, fewer than 5 attempts,
+accuracy below 80%, slow correct median or 14-day review due. Mistake focus adds
+8 when the recent window includes an error. An immediate repeat receives 8% of
+its weight when alternatives exist. All weights remain positive and bounded.
+
+History is scoped by exercise/input, sequence length/strategy/feedback/relevant
+interval variety, and piano hints/range. Ranges and clefs constrain candidates;
+same-context evidence from different pitch ranges remains useful. Current
+answers join saved history by unique ID. Selection mode does not split learning
+contexts. Structured sequences weight the start, preserving their movement
+rules; random sequences weight each pitch. Mistake practice with no matching
+mistakes falls back to exploration. No history is reset or pruned.

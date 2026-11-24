@@ -1,3 +1,5 @@
+import { LEARN } from './learning-strings.js';
+import { PIANO } from './piano-strings.js';
 import { SEQ } from './sequence-strings.js';
 // Interactive copy is centralized for future localization.
 // HTML metadata and the no-JavaScript fallback remain static.
@@ -64,6 +66,8 @@ export const TEXT = Object.freeze({
   remaining: time => `Remaining ${time}`,
   countProgress: (answered, total) => `${answered} / ${total} answered`,
   configurationErrors: {
+    selection: LEARN.error,
+    keyboard: PIANO.error,
     exercise: SEQ.exerciseError, sequence: SEQ.configError,
     clef: 'Choose treble, bass or mixed clefs.',
     naming: 'Choose a supported note naming convention.',

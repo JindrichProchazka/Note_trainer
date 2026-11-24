@@ -1,7 +1,7 @@
 # NoteTrainer
 
 A lightweight piano note-reading trainer built with HTML, CSS and vanilla JavaScript.
-**Milestones 1–4 are implemented.** No production build, backend, account,
+**Milestones 1–6 are implemented.** No production build, backend, account,
 external font or runtime dependency is required.
 
 ## Launch locally
@@ -168,7 +168,7 @@ Mastery is recalculated per exact context within the selected filters:
 | Mastered | >=20 attempts, >=95% in latest 20, correct median <1000 ms in that window |
 
 Mastered takes precedence and can decrease with recent mistakes/slower responses.
-There is no adaptive question selection.
+Adaptive selection uses these classifications alongside recent evidence.
 
 Malformed/unsupported data is preserved. Storage problems display a notice;
 new evidence remains in memory and **Retry saving** revalidates before writing.
@@ -189,7 +189,7 @@ cd C:\Users\jindr\Documents\Note_trainer\Note_trainer
 npm.cmd test
 ```
 
-**194 tests pass**, including all 95 Milestone 1/2 tests. Node's built-in runner
+**210 tests pass**, including all 95 Milestone 1/2 tests. Node's built-in runner
 covers music/ledger geometry, generation, naming, session timing and limits,
 settings, schemas/migrations, immediate evidence/deduplication, interruption,
 storage failure/retry, context separation, filtered/weighted metrics, dates,
@@ -240,7 +240,7 @@ Internal spelling and recorded answers remain international regardless of
 display naming. Mixed exercises choose either clef with equal probability, then
 choose uniformly within its range. The immediately preceding identical pitch/clef
 context is excluded when another pitch is available; single-pitch ranges remain
-answerable. This is uniform practice, without adaptive learning.
+answerable. Uniform mode preserves this behavior; adaptive modes use evidence-based weights.
 
 ## GitHub Pages and milestone scope
 
@@ -248,11 +248,38 @@ All production resource URLs and imports are relative. Navigation uses fragments
 so the repository root works under **/Note_trainer/** without a build or URL rewrite.
 The local server deliberately provides that project subpath for testing.
 
-Milestone 4 changes are local and have not been committed, pushed or published.
-Piano and adaptive modes remain deferred.
+Milestones 5–6 changes are local and have not been committed, pushed or published.
+PWA, backup, rhythm, chords and hardware MIDI remain deferred.
 
 PWA installation, a manifest, service worker, and offline caching remain scheduled
 for Milestone 7. Static files must currently be available when opening/reloading.
 
 See [the product specification](docs/PRODUCT_SPEC.md) and
 [implementation plan](docs/IMPLEMENTATION_PLAN.md) for the roadmap.
+
+## Virtual piano and adaptive practice
+
+Choose **Virtual piano** as Answer input on Home or in practice configuration.
+Single notes and sequences validate the exact MIDI pitch and octave. Configure
+the keyboard within C2–C6; it must contain the selected target ranges. Labels are
+off by default. Keys keep their size and scroll within the keyboard; automatic
+panning keeps the active target visible. Tab/Enter can activate keys. Targets
+remain natural notes; black keys are available as piano responses.
+
+Question selection offers Uniform, Adaptive, Practice Weak Notes and Practice
+Mistakes. Home explains weak areas and launches a recommended configuration;
+summaries also offer mistake practice. Focus modes prioritize their evidence
+while retaining every eligible note. Random sequences adapt every pitch;
+structured strategies adapt the starting pitch and preserve their contour.
+Sequence speed is scoped separately from isolated recognition.
+
+Learning schema 2 and existing history/settings are preserved. Piano contexts
+use inputMethod piano and numeric MIDI answers, separately from letter input.
+See docs/STORAGE_SCHEMA.md for the weighting formula and evidence scope.
+
+Validation: 210 tests passed, including all 194 prior tests; syntax checks passed.
+Essential Chromium checks covered wrong-octave feedback, Enter activation,
+delayed piano sequences, labels, 320 px key sizes/scrolling, recommendations,
+weak/mistake handoff, filtered statistics and reload persistence. No console
+errors or page overflow were observed. Physical touch, Safari/Firefox, actual
+background-tab transitions and browser/OS restart remain untested.

@@ -1,3 +1,4 @@
+import { LEARN } from './learning-strings.js';
 import { SEQ } from './sequence-strings.js';
 import { sequenceResultsMarkup } from './sequence-results.js';
 import { TEXT } from './strings.js';
@@ -41,6 +42,7 @@ export function summaryMarkup(session, { historical = false, naming = session.co
         : `<p class="muted">${stats.answered ? TEXT.noMistakes : TEXT.noAnswers}</p>`}
     </section>
     <div class="summary-actions">
+      ${stats.incorrect ? `<button class="button subtle" data-action="practice-mistakes"${historical ? ' data-session-id="' + h(session.id) + '"' : ''}>${LEARN.modes.mistakes}</button>` : ''}
       ${canRepeat(session.config) ? `<button class="button primary" data-action="${historical ? 'repeat-history' : 'repeat'}"${historical ? ` data-session-id="${h(session.id)}"` : ''}>${TEXT.repeat}</button>` : ''}
       <button class="button subtle" data-action="${historical ? 'different-history' : 'different'}"${historical ? ` data-session-id="${h(session.id)}"` : ''}>${TEXT.different}</button>
       ${historical ? `<button class="button subtle" data-action="back-to-statistics">${STATS.backToStatistics}</button>` : ''}

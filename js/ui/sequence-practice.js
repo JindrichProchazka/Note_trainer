@@ -3,7 +3,7 @@ import { renderSequenceSystem } from '../music/notation.js';
 import { sequenceResults } from '../session/sequence-statistics.js';
 import { SEQ } from './sequence-strings.js';
 import { TEXT } from './strings.js';
-import { letterName, noteName } from './note-names.js';
+import { answerName, letterName, noteName } from './note-names.js';
 import { formatAccuracy, formatResponse } from './format.js';
 import { rangeDescription } from './config-description.js';
 import { escapeHtml as h } from './html.js';
@@ -15,7 +15,7 @@ export function sequenceDisplay(session) {
   return session.question.notes.map((note, index) => {
     const attempt = answers.find(answer => answer.itemIndex === index);
     const name = noteName(note, session.config.naming);
-    const answer = attempt ? letterName(attempt.answer, session.config.naming) : null;
+    const answer = attempt ? answerName(attempt.answer, session.config.naming) : null;
     const result = attempt ? revealed ? attempt.correct ? 'correct' : 'incorrect' : 'answered' : 'unanswered';
     const active = !reviewed && index === session.itemIndex;
     return {
@@ -92,7 +92,7 @@ export class SequencePracticeView extends PracticeView {
       if (last && session.config.feedbackMode === 'immediate') {
         const name = noteName(session.question.notes[last.itemIndex], session.config.naming);
         area.dataset.result = last.correct ? 'correct' : 'incorrect';
-        message.textContent = last.correct ? TEXT.correctFeedback(name) : TEXT.incorrectFeedback(letterName(last.answer, session.config.naming), name);
+        message.textContent = last.correct ? TEXT.correctFeedback(name) : TEXT.incorrectFeedback(answerName(last.answer, session.config.naming), name);
         detail.textContent = active;
       } else {
         message.textContent = active;

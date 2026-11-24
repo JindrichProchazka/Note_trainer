@@ -1,3 +1,5 @@
+import { LEARN } from './learning-strings.js';
+import { PIANO } from './piano-strings.js';
 import { SEQ } from './sequence-strings.js';
 import { naturalNotesBetween } from '../music/notes.js';
 import { activeClefs } from '../exercises/configuration.js';
@@ -12,7 +14,7 @@ export function rangeDescription(config, clef) {
   return `${noteName(notes[0], config.naming)}–${noteName(notes.at(-1), config.naming)}`;
 }
 export function configurationDescription(config) {
-  return activeClefs(config).map(clef => `${TEXT.clefs[clef]} · ${rangeDescription(config, clef)}`).join(' / ');
+  return (config.selectionMode ? LEARN.modes[config.selectionMode] + ' · ' : '') + (config.inputMethod === 'piano' ? PIANO.inputs.piano + ' · ' : '') + activeClefs(config).map(clef => `${TEXT.clefs[clef]} · ${rangeDescription(config, clef)}`).join(' / ');
 }
 export function sessionDescription(config) {
   if (config.sessionType === 'timed') return `${TEXT.sessionTypes.timed} · ${formatDuration(config.durationMs)}`;

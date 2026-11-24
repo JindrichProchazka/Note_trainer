@@ -16,7 +16,7 @@ export function createStatisticsView() {
 }
 function filterMarkup(data, filters, naming) {
   const exercises = [...new Set(['single-note', 'sequence', ...data.sessions.map(record => record.session.config.exerciseType)])];
-  const inputs = [...new Set(['letter', ...data.sessions.map(record => record.session.config.inputMethod)])];
+  const inputs = [...new Set(['letter', 'piano', ...data.sessions.map(record => record.session.config.inputMethod)])];
   const configs = new Map(data.sessions.map(record => [configurationKey(record.session.config), record.session.config]));
   const configOptions = [...configs].map(([key, config]) => [encodeURIComponent(key),
     (TEXT.presets[config.presetId] ?? TEXT.custom) + ' · ' + configurationDescription({ ...config, naming }) + ' · ' + sessionDescription(config) + (config.exerciseType === 'sequence' ? ' · ' + exerciseDescription(config) : '')]);

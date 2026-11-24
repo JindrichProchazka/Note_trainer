@@ -22,6 +22,8 @@ export function configurationKey(config) {
     clef: config.clef, ranges: Object.fromEntries(clefs.map(clef => [clef, config.ranges[clef]])),
     sessionType: config.sessionType,
     limit: config.sessionType === 'timed' ? config.durationMs : config.sessionType === 'count' ? config.questionCount : null,
+    ...(config.selectionMode && config.selectionMode!=='uniform'?{selectionMode:config.selectionMode}:{}),
+    ...(config.inputMethod==='piano'?{keyboard:[config.keyboardMin,config.keyboardMax],noteLabels:config.noteLabels}:{}),
     exerciseType: config.exerciseType, inputMethod: config.inputMethod,
     ...(config.exerciseType === 'sequence' ? { sequenceLength: config.sequenceLength, strategy: config.sequenceStrategy, feedback: config.feedbackMode,
       ...(config.sequenceStrategy === 'intervals' ? { intervalMix: config.intervalMix } : {}) } : {}),

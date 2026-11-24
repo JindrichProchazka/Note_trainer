@@ -1,3 +1,6 @@
+import { compatibleAttempts, analyzePractice } from './learning/adaptive.js';
+import { recommendationMarkup } from './ui/recommendation.js';
+import { PianoInputView } from './ui/piano-keyboard.js';
 import { visibleLearningData } from './ui/learning-disclosure.js';
 import { SequenceSession } from './session/sequence-session.js';
 import { SequencePracticeView } from './ui/sequence-practice.js';
@@ -35,6 +38,9 @@ const answerInput = createAnswerInput();
 const state = {
   session: createSession(initialConfig), screen: 'home',
   settings: loaded.settings, storageStatus: loaded.status,
+  quickSelection: recentConfiguration?.selectionMode ?? 'uniform',
+  quickInput: recentConfiguration?.inputMethod === 'piano' ? 'piano' : 'letter',
+  pianoOptions: recentConfiguration?.inputMethod === 'piano' ? recentConfiguration : {},
   quickExercise: canRepeat(recentConfiguration ?? {}) ? recentConfiguration.exerciseType : 'single-note',
   sequenceOptions: { ...SEQUENCE_DEFAULTS, ...(recentConfiguration?.exerciseType === 'sequence' ? recentConfiguration : {}) },
   quickPreset: loaded.settings.defaultPreset, draft: initialConfig, pendingConfig: null,
@@ -76,7 +82,7 @@ const main = document.querySelector('#main'), resetDialog = document.querySelect
 
 function createSession(config) {
   const Session = config.exerciseType === 'sequence' ? SequenceSession : PracticeSession;
-  return new Session({ config, onChange: current => {
+  return new Session({ config, getAttempts:()=>compatibleAttempts(learningStore.snapshot(),config), onChange: current => {
     const record = recordFromSession(current, identity);
     if (record) learningStore.saveRecord(record);
     updateStorageStatus();
@@ -156,15 +162,21 @@ function updatePractice() {
   practiceView.update(state.session); scheduleReady(); scheduleFeedback(); scheduleDeadline();
 }
 function quickConfiguration() {
-  return validateConfiguration({ ...SEQUENCE_DEFAULTS, ...state.sequenceOptions,
-    ...configurationFromSettings(state.settings, state.quickPreset), exerciseType: state.quickExercise });
+  const draft={ ...SEQUENCE_DEFAULTS, ...state.sequenceOptions, ...state.pianoOptions,
+    ...configurationFromSettings(state.settings, state.quickPreset), exerciseType: state.quickExercise, inputMethod: state.quickInput, selectionMode: state.quickSelection };
+  if(draft.inputMethod==='piano') {
+    const clefs=draft.clef==='mixed'?['treble','bass']:[draft.clef];
+    draft.keyboardMin=Math.min(draft.keyboardMin ?? 36,...clefs.map(c=>draft.ranges[c].minMidi));
+    draft.keyboardMax=Math.max(draft.keyboardMax ?? 84,...clefs.map(c=>draft.ranges[c].maxMidi));
+  }
+  return validateConfiguration(draft);
 }
 function displayData() { return visibleLearningData(learningStore.snapshot(), state.session); }
 function homeView() {
   const data = displayData();
   const persistent = recentHomeStatistics(data);
   persistent.recentConfig = recentHomeStatistics(learningStore.snapshot()).recentConfig;
-  return homeMarkup(state.session, quickConfiguration(), persistent) +
+  return homeMarkup(state.session, quickConfiguration(), persistent) + recommendationMarkup(analyzePractice(quickConfiguration(),compatibleAttempts(data,quickConfiguration())),state.settings.naming) +
     (data.withheld ? '<p class="sequence-pending-notice" role="status">' + SEQ.withheld + '</p>' : '');
 }
 function renderStatistics(focusSelector = null) {
@@ -209,7 +221,9 @@ function showScreen(requested, { focus = true } = {}) {
     if (document.hidden) state.session.pause();
     if (state.session.tick()) { showScreen('summary', { focus }); return; }
     main.innerHTML = practiceMarkup(state.session.config);
-    practiceView = state.session.config.exerciseType === 'sequence' ? new SequencePracticeView(main) : new PracticeView(main); updatePractice();
+    practiceView = state.session.config.exerciseType === 'sequence' ? new SequencePracticeView(main) : new PracticeView(main);
+    if(state.session.config.inputMethod==='piano') practiceView=new PianoInputView(main,practiceView);
+    updatePractice();
   }
   const navScreen = screen === 'saved-summary' ? 'statistics' : ['configure', 'summary'].includes(screen) ? 'practice' : screen;
   document.querySelectorAll('nav [data-action]').forEach(link => {
@@ -225,7 +239,9 @@ function navigate(screen) {
 function startSession(config) {
   state.pendingConfig = null; resetDialog.close(); clearPending();
   state.session.interrupt(); // Previous unfinished evidence stays in history.
-  state.quickExercise = config.exerciseType;
+  state.quickSelection=config.selectionMode ?? 'uniform';
+  state.quickExercise = config.exerciseType; state.quickInput=config.inputMethod;
+  if(config.inputMethod==='piano') state.pianoOptions=config;
   if (config.exerciseType === 'sequence') state.sequenceOptions = config;
   state.draft = config;
   state.session = createSession(config); state.session.start(); navigate('practice');
@@ -264,12 +280,17 @@ function rerenderConfiguration(focusId) {
 }
 
 app.addEventListener('click', event => {
-  const answer = event.target.closest('[data-answer]');
+  const piano = event.target.closest('[data-piano]');
+  if(piano){if(answerInput.pointerAllowed(event))submit(Number(piano.dataset.piano));return;}
+  const answer = event.target.closest('[data-answer],[data-piano]');
   if (answer) { if (answerInput.pointerAllowed(event)) submit(answer.dataset.answer); return; }
   const control = event.target.closest('[data-action]');
   if (!control) return;
   event.preventDefault();
   const action = control.dataset.action;
+  if(action.startsWith('learn-')){requestSession({...quickConfiguration(),selectionMode:action.slice(6)});return;}
+  if(action==='practice-mistakes'){const saved=control.dataset.sessionId?findSaved(control.dataset.sessionId):null;requestSession({...saved?.session.config??state.session.config,selectionMode:'mistakes'});return;}
+  if(action==='piano-left'||action==='piano-right'){const keyboard=main.querySelector('.piano-scroll');keyboard.scrollLeft+=(action==='piano-left'?-1:1)*192;return;}
   if (['home', 'practice', 'statistics', 'settings', 'summary'].includes(action)) navigate(action);
   else if (action === 'quick-start') requestSession(quickConfiguration());
   else if (action === 'customize') {
@@ -315,7 +336,8 @@ app.addEventListener('click', event => {
 });
 resetDialog.addEventListener('cancel', () => { state.pendingConfig = null; });
 app.addEventListener('change', event => {
-  if (event.target.id === 'quick-exercise') {
+  if(event.target.id==='quick-input'){state.quickInput=event.target.value;state.draft=quickConfiguration();main.innerHTML=homeView();main.querySelector('#quick-input').focus();}
+  else if (event.target.id === 'quick-exercise') {
     state.quickExercise = event.target.value;
     state.draft = quickConfiguration();
     main.innerHTML = homeView(); main.querySelector('#quick-exercise').focus({ preventScroll: true });
@@ -354,6 +376,7 @@ document.addEventListener('keydown', event => {
   if (event.repeat && ['Enter', ' '].includes(event.key) && event.target.closest('[data-answer]')) event.preventDefault();
   if (event.repeat || event.altKey || event.ctrlKey || event.metaKey || state.screen !== 'practice' || document.hidden || resetDialog.open) return;
   if (event.target.closest('input, select, textarea, [contenteditable="true"]')) return;
+  if(state.session.config.inputMethod==='piano') return;
   const answer = answerInput.keydown(event, state.session.config.naming);
   if (answer) { event.preventDefault(); submit(answer); }
 });

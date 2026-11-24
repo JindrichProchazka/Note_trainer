@@ -1,3 +1,4 @@
+import { adaptiveNote } from '../learning/adaptive.js';
 import { PRACTICE_NOTES, naturalNotesBetween } from '../music/notes.js';
 import { activeClefs, validateConfiguration } from './configuration.js';
 
@@ -17,7 +18,7 @@ export function nextNote(previousMidi = null, random = Math.random, notes = PRAC
   return pool[randomIndex(pool.length, random)];
 }
 
-export function createQuestionGenerator(input, random = Math.random) {
+export function createQuestionGenerator(input, random = Math.random, learning = {}) {
   const config = validateConfiguration(input);
   const clefs = activeClefs(config);
   const pools = Object.fromEntries(clefs.map(clef => [clef,
@@ -26,6 +27,6 @@ export function createQuestionGenerator(input, random = Math.random) {
     // Choose clefs equally, independently of the number of notes in their ranges.
     const clef = clefs.length === 1 ? clefs[0] : clefs[randomIndex(clefs.length, random)];
     const previousMidi = previous?.clef === clef ? previous.note.midi : null;
-    return Object.freeze({ clef, note: nextNote(previousMidi, random, pools[clef]) });
+    return Object.freeze({ clef, note: config.selectionMode && config.selectionMode!=='uniform' ? adaptiveNote(pools[clef],clef,config,learning.getAttempts?.() ?? [],previousMidi,random,learning.now?.() ?? Date.now()) : nextNote(previousMidi, random, pools[clef]) });
   };
 }

@@ -6,7 +6,7 @@ import { formatAccuracy, formatDuration, formatResponse } from './format.js';
 import { formatTimestamp, exerciseLabel, inputLabel } from './note-performance.js';
 import { escapeHtml as h } from './html.js';
 
-export const canRepeat = config => ['single-note', 'sequence'].includes(config.exerciseType) && config.inputMethod === 'letter';
+export const canRepeat = config => ['single-note', 'sequence'].includes(config.exerciseType) && ['letter', 'piano'].includes(config.inputMethod);
 export function sessionHistoryMarkup(stats, view, naming, activeSessionId) {
   const pages = Math.max(1, Math.ceil(stats.history.length / 10)), page = Math.min(view.historyPage, pages - 1);
   const records = stats.history.slice(page * 10, (page + 1) * 10);

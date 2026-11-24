@@ -32,7 +32,7 @@ export function validateStoredConfiguration(input) {
   if (!isObject(input) || !isIdentifier(input.exerciseType) || !isIdentifier(input.inputMethod)) fail('Invalid exercise context');
   // Reuse current range/session validation, retaining future exercise/input identifiers.
   let config;
-  try { config = validateConfiguration({ ...input, exerciseType: input.exerciseType === 'sequence' ? 'sequence' : 'single-note', inputMethod: 'letter' }); } catch { fail('Invalid session configuration'); }
+  try { config = validateConfiguration({ ...input, exerciseType: input.exerciseType === 'sequence' ? 'sequence' : 'single-note', inputMethod: input.inputMethod === 'piano' ? 'piano' : 'letter' }); } catch { fail('Invalid session configuration'); }
   return { ...input, ...config, exerciseType: input.exerciseType, inputMethod: input.inputMethod };
 }
 
@@ -47,6 +47,8 @@ export function validateAttempt(attempt) {
   if (note.midi !== attempt.midi || note.octave !== attempt.octave || attempt.contextId !== id) fail('Pitch/context mismatch');
   if (attempt.inputMethod === 'letter') {
     if (!LETTERS.includes(attempt.answer) || attempt.correct !== (attempt.answer === note.letter)) fail('Invalid letter answer');
+  } else if (attempt.inputMethod === 'piano') {
+    if(!Number.isInteger(attempt.answer)||attempt.answer<0||attempt.answer>127||attempt.correct!==(attempt.answer===note.midi)) fail('Invalid piano answer');
   } else if (attempt.answer !== null && !(typeof attempt.answer === 'string' || Number.isFinite(attempt.answer))) {
     fail('Invalid submitted answer');
   }
@@ -79,6 +81,7 @@ export function validateSessionRecord(record) {
   const ids = new Set(), questions = new Set(), ordinals = new Set(), buckets = new Set();
   for (const attempt of record.attempts) {
     validateAttempt(attempt);
+    if(config.inputMethod==='piano' && (attempt.answer<config.keyboardMin || attempt.answer>config.keyboardMax)) fail('Piano answer outside keyboard');
     if (attempt.sessionId !== session.id || ids.has(attempt.id) || questions.has(questionKey(attempt)) ||
         ordinals.has(attempt.ordinal) || attempt.exerciseType !== config.exerciseType ||
         attempt.inputMethod !== config.inputMethod || !activeClefs(config).includes(attempt.clef) ||

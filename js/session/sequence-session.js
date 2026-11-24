@@ -1,3 +1,4 @@
+import { validAnswer, correctAnswer } from '../exercises/answers.js';
 import { PracticeSession } from './session.js';
 import { createSequenceGenerator } from '../exercises/sequence.js';
 import { LETTERS, writtenName } from '../music/notes.js';
@@ -11,7 +12,7 @@ export class SequenceSession extends PracticeSession {
   constructor(options) {
     super(options);
     if (this.config.exerciseType !== 'sequence') throw new RangeError('Sequence configuration required');
-    this.generateSequence = createSequenceGenerator(this.config, options?.random ?? Math.random);
+    this.generateSequence = createSequenceGenerator(this.config, options?.random ?? Math.random, {getAttempts:this.getAttempts,now:this.wallClock});
     this.sequences = [];
     this.itemIndex = 0;
   }
@@ -36,7 +37,7 @@ export class SequenceSession extends PracticeSession {
   get sequenceReviewed() { return !!this.question && this.currentAnswers.length === this.question.notes.length; }
   get holdFinalReview() { return this.phase === 'complete' && this.completionReason === 'count' && this.sequenceReviewed; }
   submit(answer, expectedToken = this.answerToken) {
-    if (this.tick() || this.phase !== 'awaiting' || !LETTERS.includes(answer) || expectedToken !== this.answerToken) return null;
+    if (this.tick() || this.phase !== 'awaiting' || !validAnswer(answer, this.config) || expectedToken !== this.answerToken) return null;
     const now = this.clock(), note = this.question.notes[this.itemIndex];
     this.captureActivity(now);
     const context = { writtenNote: writtenName(note), clef: this.question.clef,
@@ -46,7 +47,7 @@ export class SequenceSession extends PracticeSession {
       id: this.question.id + ':' + this.itemIndex + ':answer', sessionId: this.id,
       questionId: this.question.id, sequenceId: this.question.id, itemIndex: this.itemIndex,
       ordinal: this.attempts.length + 1, midi: note.midi, octave: note.octave,
-      ...context, contextId: contextId(context), answer, correct: isCorrectAnswer(note, answer),
+      ...context, contextId: contextId(context), answer, correct: correctAnswer(note, answer, this.config),
       responseTimeMs: Math.max(0, this.responseMs + now - this.readyAt), timestamp, day: localDay(timestamp),
     });
     this.attempts.push(attempt);

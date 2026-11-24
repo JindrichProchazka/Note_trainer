@@ -1348,9 +1348,9 @@ Milestone 3: Complete (2026-11-24)
 
 Milestone 4: Complete (2026-11-24)
 
-Milestone 5: Not started
+Milestone 5: Complete (2026-11-24)
 
-Milestone 6: Not started
+Milestone 6: Complete (2026-11-24)
 
 Milestone 7: Not started
 
@@ -1358,7 +1358,7 @@ Milestone 8: Not started
 
 
 
-Currently authorized milestone: Milestone 4 only.
+Currently authorized milestones: Milestones 5 and 6 (explicit user authorization).
 
 
 
@@ -1508,3 +1508,6 @@ Validation: 194 automated tests pass, including all 139 previous tests. Essentia
 browser checks and precise validation limits are recorded in
  docs/validation/MILESTONE_4.md. No later milestone was implemented; no commit,
 push or publication was performed.
+Milestone 5 phase: virtual piano implemented for single notes and sequences, exact MIDI input, configurable range, optional labels, automatic visibility and separate persistent contexts. Five targeted piano tests pass; final essential browser checks verified exact-pitch input, feedback, labels, mobile key sizing and persistence.
+
+Milestone 6 phase: implemented bounded positive adaptive weights, scoped evidence, weak/mistake practice, Home recommendations and mastery integration. Structured sequences adapt their start; random sequences adapt each pitch. Final validation: 210/210 tests passed, including all 194 previous tests; essential piano/adaptive browser checks passed. Physical devices and other browsers remain unverified. Milestones 7–8 remain deferred. No commit, push or publication.

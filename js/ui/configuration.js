@@ -1,3 +1,5 @@
+import { LEARN } from './learning-strings.js';
+import { PIANO } from './piano-strings.js';
 import { SEQ } from './sequence-strings.js';
 import { PRESETS, NOTE_LIMITS, TIMED_PRESETS, COUNT_PRESETS, SEQUENCE_DEFAULTS, SEQUENCE_LENGTHS } from '../config.js';
 import { naturalNotesBetween } from '../music/notes.js';
@@ -31,6 +33,16 @@ export function configurationMarkup(draft) {
     <form id="practice-form" class="card form-card" novalidate>
       <label class="form-field" for="practice-exercise">${SEQ.mode}
         <select id="practice-exercise">${selectOptions(SEQ.modes, draft.exerciseType ?? 'single-note')}</select></label>
+      <label class="form-field" for="practice-input">${PIANO.input}<select id="practice-input">${selectOptions(PIANO.inputs,draft.inputMethod ?? 'letter')}</select></label>
+      <div${draft.inputMethod === 'piano' ? '' : ' hidden'}>
+        <div class="form-grid">
+          <label class="form-field" for="keyboard-low">${PIANO.low}<select id="keyboard-low">${noteOptions(draft.keyboardMin ?? 36)}</select></label>
+          <label class="form-field" for="keyboard-high">${PIANO.high}<select id="keyboard-high">${noteOptions(draft.keyboardMax ?? 84)}</select></label>
+        </div>
+        <label class="form-field" for="piano-labels">${PIANO.labels}<select id="piano-labels">${selectOptions(PIANO.labelOptions,draft.noteLabels ? 'on' : 'off')}</select></label>
+      </div>
+      <label class="form-field" for="selection-mode">${LEARN.selection}<select id="selection-mode">${selectOptions(LEARN.modes,draft.selectionMode ?? 'uniform')}</select></label>
+      <p class="form-hint" style="margin-bottom:16px">${LEARN.hint}</p>
       <div class="sequence-options"${sequence ? '' : ' hidden'}>
         <div class="form-grid">
           <label class="form-field" for="sequence-length">${SEQ.length}
@@ -97,7 +109,7 @@ export function configurationMarkup(draft) {
 export function readConfiguration(form, previous) {
   const value = id => form.querySelector('#' + id).value;
   return {
-    ...previous, exerciseType: value('practice-exercise'), sequenceLength: Number(value('sequence-length')),
+    ...previous, selectionMode:value('selection-mode'), inputMethod:value('practice-input'), keyboardMin:Number(value('keyboard-low')), keyboardMax:Number(value('keyboard-high')), noteLabels:value('piano-labels')==='on', exerciseType: value('practice-exercise'), sequenceLength: Number(value('sequence-length')),
     sequenceStrategy: value('sequence-strategy'), feedbackMode: value('sequence-feedback'), intervalMix: value('sequence-intervals'),
     presetId: value('practice-preset'), clef: value('clef-choice'),
     customDuration: value('duration-preset') === 'custom', customCount: value('count-preset') === 'custom',

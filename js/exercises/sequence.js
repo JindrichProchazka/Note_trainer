@@ -1,3 +1,4 @@
+import { adaptiveNote } from '../learning/adaptive.js';
 import { SEQUENCE_STRATEGIES, INTERVAL_MIXES } from '../config.js';
 import { naturalNotesBetween } from '../music/notes.js';
 import { activeClefs, validateConfiguration } from './configuration.js';
@@ -15,22 +16,25 @@ const reflect = (index, length) => {
   return offset < length ? offset : period - offset;
 };
 
-export function createSequenceGenerator(input, random = Math.random) {
+export function createSequenceGenerator(input, random = Math.random, learning = {}) {
   const config = validateConfiguration(input);
   if (config.exerciseType !== 'sequence') throw new RangeError('Sequence configuration required');
   const clefs = activeClefs(config);
   const pools = Object.fromEntries(clefs.map(clef => [clef,
     naturalNotesBetween(config.ranges[clef].minMidi, config.ranges[clef].maxMidi)]));
+  let previous=null;
   return (length = config.sequenceLength) => {
     if (!Number.isInteger(length) || length < 1 || length > config.sequenceLength) throw new RangeError('Invalid sequence length');
     const clef = clefs.length === 1 ? clefs[0] : pick(clefs, random);
     const pool = pools[clef], strategy = config.sequenceStrategy;
-    let index = randomIndex(pool.length, random);
+    const adaptive=config.selectionMode && config.selectionMode!=='uniform';
+    const choose = previousMidi => adaptiveNote(pool,clef,config,learning.getAttempts?.() ?? [],previousMidi,random,learning.now?.() ?? Date.now());
+    let index = adaptive ? pool.indexOf(choose(previous?.clef===clef?previous.midi:null)) : randomIndex(pool.length, random);
     const notes = [pool[index]];
     const direction = pick([-1, 1], random);
     const contour = SEQUENCE_STRATEGIES.melodic.contour;
     for (let position = 1; position < length; position++) {
-      if (strategy === 'random') index = randomIndex(pool.length, random);
+      if (strategy === 'random') index = adaptive ? pool.indexOf(choose(pool[index].midi)) : randomIndex(pool.length, random);
       else {
         let step;
         if (strategy === 'stepwise') {
@@ -44,6 +48,7 @@ export function createSequenceGenerator(input, random = Math.random) {
       }
       notes.push(pool[index]);
     }
+    previous={clef,midi:notes.at(-1).midi};
     return Object.freeze({ clef, notes: Object.freeze(notes) });
   };
 }

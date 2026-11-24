@@ -16,7 +16,9 @@ export function validateConfiguration(input) {
   if (!['unlimited', 'timed', 'count'].includes(input.sessionType)) throw new ConfigurationError('session');
   if (!Object.hasOwn(PRESETS, input.presetId) && input.presetId !== 'custom') throw new ConfigurationError('preset');
   const exerciseType = input.exerciseType ?? 'single-note';
-  if (!['single-note', 'sequence'].includes(exerciseType) || (input.inputMethod ?? 'letter') !== 'letter') throw new ConfigurationError('exercise');
+  if (!['single-note', 'sequence'].includes(exerciseType) || !['letter', 'piano'].includes(input.inputMethod ?? 'letter')) throw new ConfigurationError('exercise');
+  const selectionMode=input.selectionMode ?? 'uniform';
+  if(!['uniform','adaptive','weak','mistakes'].includes(selectionMode))throw new ConfigurationError('selection');
   let sequence = {};
   if (exerciseType === 'sequence') {
     sequence = Object.fromEntries(Object.entries(SEQUENCE_DEFAULTS).map(([key, value]) => [key, input[key] ?? value]));
@@ -48,10 +50,19 @@ export function validateConfiguration(input) {
       ranges[clef].minMidi !== definition.ranges[clef].minMidi ||
       ranges[clef].maxMidi !== definition.ranges[clef].maxMidi)) throw new ConfigurationError('preset');
   }
+  const inputMethod = input.inputMethod ?? 'letter';
+  let piano = {};
+  if (inputMethod === 'piano') {
+    const keyboardMin=input.keyboardMin ?? 36, keyboardMax=input.keyboardMax ?? 84;
+    if(!Number.isInteger(keyboardMin)||!Number.isInteger(keyboardMax)||keyboardMin<36||keyboardMax>84||keyboardMin>keyboardMax||
+      activeClefs(input).some(clef=>ranges[clef].minMidi<keyboardMin||ranges[clef].maxMidi>keyboardMax)||
+      (input.noteLabels!==undefined && typeof input.noteLabels!=='boolean')) throw new ConfigurationError('keyboard');
+    piano={keyboardMin,keyboardMax,noteLabels:input.noteLabels ?? false};
+  }
   return Object.freeze({
     presetId: input.presetId, clef: input.clef, ranges: Object.freeze(ranges),
     naming: input.naming, sessionType: input.sessionType, durationMs, questionCount,
-    exerciseType, inputMethod: 'letter', ...sequence,
+    exerciseType, inputMethod, ...sequence, ...piano, ...(selectionMode==='uniform'?{}:{selectionMode}),
   });
 }
 

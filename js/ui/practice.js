@@ -1,8 +1,9 @@
+import { pianoMarkup } from './piano-keyboard.js';
 import { SEQ } from './sequence-strings.js';
 import { LETTERS } from '../music/notes.js';
 import { renderNotation } from '../music/notation.js';
 import { TEXT } from './strings.js';
-import { letterName, noteName } from './note-names.js';
+import { answerName, letterName, noteName } from './note-names.js';
 import { rangeDescription } from './config-description.js';
 import { formatAccuracy, formatDuration, formatResponse, formatRemaining } from './format.js';
 
@@ -37,10 +38,10 @@ export function practiceMarkup(config) {
         </div>
         <button class="button subtle next-button" data-action="next" id="next-button" hidden>${TEXT.next} →</button>
       </div>
-      <div class="answer-buttons" role="group" aria-label="${TEXT.answerGroup}">
+      ${config.inputMethod === 'piano' ? pianoMarkup(config) : `<div class="answer-buttons" role="group" aria-label="${TEXT.answerGroup}">
         ${LETTERS.map(letter => `<button class="answer-button" data-answer="${letter}"
           aria-label="${TEXT.answerLabel(letterName(letter, config.naming))}" aria-disabled="true">${letterName(letter, config.naming)}</button>`).join('')}
-      </div>
+      </div>`}
       </div>
     </div>
     <dl class="metrics practice-metrics">
@@ -106,7 +107,7 @@ export class PracticeView {
         notation.dataset.result = area.dataset.result;
         notation.setAttribute('aria-label', TEXT.feedbackLabel(clefName, name));
         message.textContent = attempt.correct ? TEXT.correctFeedback(name)
-          : TEXT.incorrectFeedback(letterName(attempt.answer, session.config.naming), name);
+          : TEXT.incorrectFeedback(answerName(attempt.answer, session.config.naming), name);
         detail.textContent = attempt.correct
           ? (complete ? TEXT.finalCorrectDetail : TEXT.responseDetail)(formatResponse(attempt.responseTimeMs))
           : complete ? TEXT.finalIncorrectDetail : TEXT.incorrectDetail;

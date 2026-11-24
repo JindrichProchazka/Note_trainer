@@ -1,3 +1,4 @@
+import { validAnswer, correctAnswer } from '../exercises/answers.js';
 import { EXERCISE_CONFIG } from '../config.js';
 import { LETTERS, writtenName } from '../music/notes.js';
 import { createQuestionGenerator } from '../exercises/generator.js';
@@ -13,13 +14,14 @@ const newId = () => globalThis.crypto?.randomUUID?.() ?? `session-${Date.now()}-
 /** DOM-free timing/state machine; an observer can persist complete evidence snapshots. */
 export class PracticeSession {
   constructor({ config = EXERCISE_CONFIG, clock = () => performance.now(), wallClock = () => Date.now(),
-    random = Math.random, id = newId(), onChange = () => {} } = {}) {
+    random = Math.random, getAttempts = () => [], id = newId(), onChange = () => {} } = {}) {
     this.clock = clock;
     this.wallClock = wallClock;
     this.onChange = onChange;
     this.id = id;
     this.config = validateConfiguration(config);
-    this.generateQuestion = createQuestionGenerator(this.config, random);
+    this.getAttempts = () => [...new Map([...getAttempts(), ...(this.attempts ?? [])].map(attempt=>[attempt.id,attempt])).values()];
+    this.generateQuestion = createQuestionGenerator(this.config, random, {getAttempts:this.getAttempts,now:wallClock});
     this.startedAt = null;
     this.finishedAt = null;
     this.interruptedAt = null;
@@ -69,7 +71,7 @@ export class PracticeSession {
     return true;
   }
   submit(answer) {
-    if (this.tick() || this.phase !== 'awaiting' || !LETTERS.includes(answer)) return null;
+    if (this.tick() || this.phase !== 'awaiting' || !validAnswer(answer, this.config)) return null;
     const now = this.clock();
     this.captureActivity(now);
     const context = {
@@ -82,7 +84,7 @@ export class PracticeSession {
       ordinal: this.attempts.length + 1, itemIndex: 0,
       midi: this.question.note.midi, octave: this.question.note.octave,
       ...context, contextId: contextId(context), answer,
-      correct: isCorrectAnswer(this.question.note, answer),
+      correct: correctAnswer(this.question.note, answer, this.config),
       responseTimeMs: Math.max(0, this.responseMs + now - this.readyAt),
       timestamp, day: localDay(timestamp),
     });
