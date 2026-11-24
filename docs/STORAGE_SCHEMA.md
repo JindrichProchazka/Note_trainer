@@ -273,3 +273,34 @@ answers join saved history by unique ID. Selection mode does not split learning
 contexts. Structured sequences weight the start, preserving their movement
 rules; random sequences weight each pitch. Mistake practice with no matching
 mistakes falls back to exploration. No history is reset or pruned.
+
+## Milestones 7–8: release, backups and atomic data changes
+
+The Service Worker caches only application responses in scope-owned, content-
+versioned caches. It never reads or writes learning storage. Failed installs
+preserve the active worker; update activation requires safe votes from open tabs.
+
+Backup format `notetrainer-backup`, schema 1, carries `exportedAt`, `appVersion`,
+`learningSchemaVersion`, and `data` containing the preferences envelope, learning
+manifest and all session documents. Existing validators and v1→v2 migrations run
+before any mutation; unsupported formats and duplicate IDs are rejected.
+Export includes pending valid in-memory evidence and preserves compatible fields.
+
+Merge preserves device preferences and deduplicates session/attempt IDs.
+Compatible unfinished checkpoints can extend evidence; conflicting terminal
+records block merge with their session IDs. Replace uses imported preferences
+and history after explicit confirmation. Imported unfinished sessions become
+interrupted without losing answers. Stale previews fail rather than overwrite.
+
+Until the first restore/reset, the existing logical keys remain physical keys.
+Afterward, `notetrainer.data-head` identifies a generation whose keys start with
+`notetrainer.generation.<id>.`; settings/learning adapters retain their logical
+key interface. All replacement documents are staged and read back, then a single
+atomic head write commits them. Failed staging never changes the active head.
+Old tabs detect the head change and must reload; staging events are ignored.
+
+Prior generations and legacy documents remain untouched, consuming extra quota.
+Reset empties active learning data, preserves the raw preferences envelope and
+does not reclaim old copies. Browser eviction can remove all generations.
+A downloaded backup remains necessary. Import has a 20 MB file limit and needs
+enough free quota for staging; no cloud synchronization or automatic pruning.

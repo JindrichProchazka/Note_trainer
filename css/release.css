@@ -1,0 +1,12 @@
+.release-banner { max-width:1024px; margin:10px auto; padding:8px 20px; display:flex; align-items:center; flex-wrap:wrap; gap:12px; color:var(--muted); font-size:.75rem; }
+.release-banner p { flex:1 1 260px; }
+.data-management { margin-top:24px; padding:24px; }
+.data-management > p { margin-top:12px; font-size:.83rem; }
+.data-actions { display:flex; flex-wrap:wrap; gap:10px; margin:18px 0; }
+.data-management input { max-width:100%; }
+.backup-preview { border:1px solid var(--line); padding:16px; border-radius:12px; margin:18px 0; }
+.backup-preview p { font-size:.82rem; margin:8px 0; overflow-wrap:anywhere; }
+.data-error { color:var(--bad); }
+.danger-button { color:var(--bad); border-color:var(--bad); }
+
+.data-confirm-check { display:flex; align-items:center; gap:10px; min-height:48px; margin-top:16px; font-size:.85rem; }

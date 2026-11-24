@@ -1,3 +1,7 @@
+import { DATA } from './ui/data-strings.js';
+import { createManagedStorage, DATA_HEAD } from './data/managed-storage.js';
+import { createDataManager } from './ui/data-management.js';
+import { startPwa } from './pwa.js';
 import { compatibleAttempts, analyzePractice } from './learning/adaptive.js';
 import { recommendationMarkup } from './ui/recommendation.js';
 import { PianoInputView } from './ui/piano-keyboard.js';
@@ -12,7 +16,6 @@ import { configurationFromSettings, validateConfiguration } from './exercises/co
 import { createSettingsStore, validateSettings } from './data/settings.js';
 import { createLearningStore, tabIdentity } from './data/storage.js';
 import { recordFromSession, archivedSession } from './data/recording.js';
-import { LEARNING_KEY, SESSION_PREFIX } from './data/schema.js';
 import { recentHomeStatistics } from './learning/statistics.js';
 import { TEXT } from './ui/strings.js';
 import { STATS } from './ui/statistics-strings.js';
@@ -27,9 +30,10 @@ import { canRepeat } from './ui/session-history.js';
 let idCounter = 0;
 const makeId = () => globalThis.crypto?.randomUUID?.() ?? `run-${Date.now()}-${++idCounter}`;
 const identity = { ownerId: makeId(), tabId: tabIdentity(makeId) };
-const settingsStore = createSettingsStore();
+const dataStorage=createManagedStorage();
+const settingsStore = createSettingsStore(()=>dataStorage);
 const loaded = settingsStore.load();
-const learningStore = createLearningStore();
+const learningStore = createLearningStore({getStorage:()=>dataStorage});
 learningStore.load();
 learningStore.recoverInterrupted(identity.tabId, identity.ownerId);
 const initialConfig = configurationFromSettings(loaded.settings);
@@ -47,6 +51,7 @@ const state = {
   statistics: createStatisticsView(), archiveId: null,
 };
 state.draft = quickConfiguration();
+let appUpdateLocked=false, dataManager=null, dataChanged=false;
 let practiceView = null, feedbackTimer = null, deadlineTimer = null, readyFrame = null;
 const systemTheme = matchMedia('(prefers-color-scheme: dark)');
 const app = document.querySelector('#app');
@@ -71,6 +76,10 @@ app.innerHTML = `<a class="skip-link" href="#main">${TEXT.skip}</a>
   <div id="storage-banner" class="storage-banner" role="status" hidden>
     <p id="storage-message"></p><button class="button subtle" data-action="retry-storage" id="retry-storage" hidden>${STATS.retry}</button>
   </div>
+  <aside id="data-changed-notice" class="storage-banner" role="status" hidden>
+    <p>${DATA.changed}</p>
+    <button class="button subtle" data-action="reload-data">${DATA.reload}</button>
+  </aside>
   <main id="main" tabindex="-1"></main>
   <dialog id="reset-dialog" aria-labelledby="reset-title" aria-describedby="reset-description">
     <h2 id="reset-title">${TEXT.newSessionTitle}</h2><p id="reset-description" class="muted">${STATS.startConfirm}</p>
@@ -231,6 +240,7 @@ function showScreen(requested, { focus = true } = {}) {
     else link.removeAttribute('aria-current');
   });
   updateStorageStatus();
+  if(screen==='settings')dataManager?.mount();
   if (focus) { window.scrollTo(0, 0); main.querySelector('h1').focus({ preventScroll: true }); }
 }
 function navigate(screen) {
@@ -247,6 +257,7 @@ function startSession(config) {
   state.session = createSession(config); state.session.start(); navigate('practice');
 }
 function requestSession(config) {
+  if(appUpdateLocked||dataChanged)return;
   const validated = validateConfiguration(config);
   if (state.session.attempts.length && !['complete', 'interrupted'].includes(state.session.phase)) {
     state.pendingConfig = validated; resetDialog.showModal();
@@ -263,7 +274,7 @@ function advance() {
   if (nextHadFocus) main.querySelector('[data-answer]').focus({ preventScroll: true });
 }
 function submit(answer) {
-  if (state.screen !== 'practice' || document.hidden || resetDialog.open) return;
+  if (dataChanged || appUpdateLocked || state.screen !== 'practice' || document.hidden || resetDialog.open) return;
   const attempt = state.session.submit(answer);
   if (!attempt) { if (state.session.phase === 'complete' && !state.session.holdFinalReview) showSummary(); return; }
   clearPending(); updatePractice();
@@ -288,6 +299,8 @@ app.addEventListener('click', event => {
   if (!control) return;
   event.preventDefault();
   const action = control.dataset.action;
+  if(action==='reload-data'){location.reload();return;}
+  if(dataChanged)return;
   if(action.startsWith('learn-')){requestSession({...quickConfiguration(),selectionMode:action.slice(6)});return;}
   if(action==='practice-mistakes'){const saved=control.dataset.sessionId?findSaved(control.dataset.sessionId):null;requestSession({...saved?.session.config??state.session.config,selectionMode:'mistakes'});return;}
   if(action==='piano-left'||action==='piano-right'){const keyboard=main.querySelector('.piano-scroll');keyboard.scrollLeft+=(action==='piano-left'?-1:1)*192;return;}
@@ -390,7 +403,13 @@ document.addEventListener('visibilitychange', () => {
 window.addEventListener('pagehide', () => { clearPending(); state.session.interrupt(); });
 window.addEventListener('pageshow', event => { if (event.persisted) location.reload(); });
 window.addEventListener('storage', event => {
-  if (event.key === LEARNING_KEY || event.key?.startsWith(SESSION_PREFIX)) {
+  if(event.key===DATA_HEAD||event.key===null){
+    dataChanged=true;clearPending();state.session.pause();
+    if(state.screen==='practice')practiceView?.update(state.session);
+    document.querySelector('#data-changed-notice').hidden=false;
+    return;
+  }
+  if (dataStorage.acceptsEvent(event.key)) {
     learningStore.load(); updateStorageStatus();
     if (state.screen === 'statistics') renderStatistics();
     if (state.screen === 'home') main.innerHTML = homeView();
@@ -411,3 +430,18 @@ setInterval(() => {
   practiceView?.updateStatistics(state.session);
 }, 100);
 setInterval(() => { if (!document.hidden) state.session.checkpoint(); }, 1000);
+
+const pwa=startPwa({
+  canActivate:()=>!dataChanged && !dataManager?.busy && !dataManager?.hasPreview &&
+    (!state.session.startedAt || ['complete','interrupted'].includes(state.session.phase)) &&
+    learningStore.health().pendingCount===0 && state.storageStatus==='ok',
+  lock:value=>{appUpdateLocked=value;},
+});
+
+dataManager=createDataManager({
+  root:app,storage:dataStorage,getSnapshot:()=>learningStore.snapshot(),getSettings:()=>state.settings,
+  canModify:()=>!dataChanged&&!appUpdateLocked&&(!state.session.startedAt||['complete','interrupted'].includes(state.session.phase)),
+  onCommitted:()=>{appUpdateLocked=true;location.reload();},
+  checkUpdate:()=>pwa.check(),
+});
+dataManager.mount();

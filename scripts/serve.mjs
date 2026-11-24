@@ -5,7 +5,7 @@ import path from 'node:path';
 
 const ROOT = fileURLToPath(new URL('../', import.meta.url));
 const MIME = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8',
-  '.js': 'text/javascript; charset=utf-8' };
+  '.js': 'text/javascript; charset=utf-8', '.webmanifest':'application/manifest+json', '.png':'image/png', '.svg':'image/svg+xml' };
 
 export function createStaticServer() {
   return http.createServer(async (request, response) => {
@@ -28,7 +28,7 @@ export function createStaticServer() {
     if (pathname === '/') pathname = '/index.html';
     if (pathname === '/favicon.ico') { response.writeHead(204).end(); return; }
     // Serve only application assets; never expose Git metadata or local documents.
-    const allowed = pathname === '/index.html' || /^\/(?:css|js)\/[a-zA-Z0-9_./-]+$/.test(pathname);
+    const allowed = ['/index.html','/manifest.webmanifest','/sw.js','/sw-assets.js'].includes(pathname) || /^\/(?:css|js|assets)\/[a-zA-Z0-9_./-]+$/.test(pathname);
     const relative = pathname.slice(1);
     const target = path.resolve(ROOT, relative);
     if (!allowed || relative.split(/[\\/]/).some(segment => segment.startsWith('.')) ||

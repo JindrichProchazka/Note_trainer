@@ -1,3 +1,4 @@
+import { dataManagementMarkup } from './data-management.js';
 import { TEXT } from './strings.js';
 import { selectOptions, presetOptions } from './configuration.js';
 
@@ -18,5 +19,6 @@ export function settingsMarkup(settings, storageStatus) {
       <p class="form-hint">${TEXT.settingsHint}</p>
       <p class="settings-status" id="settings-status" role="status">${storageStatus === 'ok' ? TEXT.settingsSaved : TEXT.storageStatus[storageStatus]}</p>
     </form>
+    ${dataManagementMarkup()}
   </section>`;
 }

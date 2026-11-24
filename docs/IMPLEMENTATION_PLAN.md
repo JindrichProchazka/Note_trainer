@@ -1352,13 +1352,13 @@ Milestone 5: Complete (2026-11-24)
 
 Milestone 6: Complete (2026-11-24)
 
-Milestone 7: Not started
+Milestone 7: Complete (2026-11-24)
 
-Milestone 8: Not started
+Milestone 8: Complete (2026-11-24)
 
 
 
-Currently authorized milestones: Milestones 5 and 6 (explicit user authorization).
+Currently authorized milestones: Milestones 7 and 8 (explicit user authorization).
 
 
 
@@ -1511,3 +1511,22 @@ push or publication was performed.
 Milestone 5 phase: virtual piano implemented for single notes and sequences, exact MIDI input, configurable range, optional labels, automatic visibility and separate persistent contexts. Five targeted piano tests pass; final essential browser checks verified exact-pitch input, feedback, labels, mobile key sizing and persistence.
 
 Milestone 6 phase: implemented bounded positive adaptive weights, scoped evidence, weak/mistake practice, Home recommendations and mastery integration. Structured sequences adapt their start; random sequences adapt each pitch. Final validation: 210/210 tests passed, including all 194 previous tests; essential piano/adaptive browser checks passed. Physical devices and other browsers remain unverified. Milestones 7–8 remain deferred. No commit, push or publication.
+
+Milestone 7 phase — complete: relative manifest, 192/512/maskable/Apple icons,
+standalone display, full-asset versioned offline caching and explicit multi-tab
+update approval. Failed installations preserve the previous app and learning data.
+
+Milestone 8 phase — complete: Settings Data Management, dated versioned JSON
+export, validated/migrated preview, confirmed replace/merge, duplicate/conflict
+handling, atomic staged restore and confirmed statistics reset keeping preferences.
+Old tabs cannot write into a newly restored generation. Existing learning data is
+preserved; retained generations require additional LocalStorage capacity.
+
+Release version: v1.0.0. Validation: 235/235 automated tests pass, including all
+210 prior tests. Essential Chromium checks covered offline startup/practice/
+persistence/export/import, duplicate-safe merge, multi-tab update protection and
+activation, reset cancellation and narrow-screen controls. Invalid schema,
+replace/reset commits and storage failures use automated fixtures. Physical
+iPhone/Android installation, Safari/Firefox and published hosting remain manual
+verification; README contains instructions. No required implementation remains.
+No commit, push, tag or publication was performed.

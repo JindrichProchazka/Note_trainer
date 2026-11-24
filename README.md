@@ -1,7 +1,7 @@
 # NoteTrainer
 
 A lightweight piano note-reading trainer built with HTML, CSS and vanilla JavaScript.
-**Milestones 1–6 are implemented.** No production build, backend, account,
+**Milestones 1–8 are implemented; application version v1.0.0.** No production build, backend, account,
 external font or runtime dependency is required.
 
 ## Launch locally
@@ -124,8 +124,8 @@ their duration on the last answer, show its feedback, then open the summary.
 ## Settings, persistence and Statistics
 
 Settings saves light/dark/system theme, naming, default preset and session type.
-Defaults apply to new sessions; themes change immediately. Milestone 2 preferences
-remain at `notetrainer.settings`, schema 1, including compatible unknown fields.
+Defaults apply to new sessions; themes change immediately. Preferences retain schema 1
+and the logical key `notetrainer.settings`, including compatible unknown fields.
 
 Learning data uses a separate **schema 2** manifest and one atomic LocalStorage
 document per session. Every valid answer is saved immediately; completion never
@@ -179,7 +179,7 @@ site data or browser eviction can remove browser-managed data. Different local
 ports and the published site have separate histories. Abrupt termination can
 lose the latest active-time checkpoint or leave an Unfinished record.
 
-No backup, restore, destructive reset or cloud sync is included.
+Settings includes backup, restore and confirmed statistics reset; there is no cloud sync.
 See [the schema, migration and complete metric definitions](docs/STORAGE_SCHEMA.md).
 
 ## Automated tests and validation
@@ -189,28 +189,25 @@ cd C:\Users\jindr\Documents\Note_trainer\Note_trainer
 npm.cmd test
 ```
 
-**210 tests pass**, including all 95 Milestone 1/2 tests. Node's built-in runner
-covers music/ledger geometry, generation, naming, session timing and limits,
-settings, schemas/migrations, immediate evidence/deduplication, interruption,
-storage failure/retry, context separation, filtered/weighted metrics, dates,
-mastery/degradation, history, Home, rendered views and all JS/CSS resources
-served under the GitHub Pages project subpath.
+**235 tests pass**, including all 210 prior tests. New tests cover complete offline
+asset caching/version integrity, deployment scope, failed installation, update
+approval, backup validation/migration, duplicate/conflict handling, atomic import
+failures, concurrent-change guards and preference-preserving reset.
 
-Embedded Chromium validation on **2026-11-24** exercised empty/populated
-Statistics, actual practice recording, reload persistence, preservation of M2
-preferences, repeat/history, both clefs/naming systems, charts/filters, Home,
-light/dark and responsive mobile/desktop layouts. No horizontal overflow or
-critical console errors were observed. Validation data used isolated port 5174.
+Essential embedded Chromium checks on 2026-11-24 used isolated port 5175:
+server-stopped offline startup, adaptive piano sequence practice, saved results
+after reload, offline export, actual exported-file preview and duplicate merge;
+multi-tab update deferral/activation preserved evidence. Reset cancellation and
+failed file reads preserved data. The 390 px Data Management view had no horizontal
+overflow; the final browser check reported no console errors.
+Malformed/future backups, replace/reset commits and quota failures were verified
+automatically. The embedded browser could reimport its downloaded backup but
+could not read separately created invalid-file fixtures.
 
-See [the M3 validation report, file inventory and manual checks](docs/validation/MILESTONE_3.md),
-[desktop overview](docs/validation/m3-desktop-overview.jpg) and
-[mobile note view](docs/validation/m3-mobile-notes.jpg).
-[The M2 report](docs/validation/MILESTONE_2.md) records the earlier baseline.
-
-Physical touch devices, Safari/Firefox, browser/OS restart, actual background-tab
-transitions and published hosting remain untested. Corrupt/denied/full storage,
-multi-day history and exact mastery boundaries use deterministic automated
-fixtures; they were not injected into browser storage.
+Physical iPhone/Android installation, Safari/Firefox, OS restart and published
+GitHub Pages remain manual checks. Earlier validation is recorded in
+[Milestone 3](docs/validation/MILESTONE_3.md) and
+[Milestone 4](docs/validation/MILESTONE_4.md).
 
 ## Architecture and musical accuracy
 
@@ -248,11 +245,8 @@ All production resource URLs and imports are relative. Navigation uses fragments
 so the repository root works under **/Note_trainer/** without a build or URL rewrite.
 The local server deliberately provides that project subpath for testing.
 
-Milestones 5–6 changes are local and have not been committed, pushed or published.
-PWA, backup, rhythm, chords and hardware MIDI remain deferred.
-
-PWA installation, a manifest, service worker, and offline caching remain scheduled
-for Milestone 7. Static files must currently be available when opening/reloading.
+Milestones 7–8 changes are local; nothing has been committed, pushed, tagged or
+published. Rhythm, intervals, chords, grand staff and hardware MIDI remain deferred.
 
 See [the product specification](docs/PRODUCT_SPEC.md) and
 [implementation plan](docs/IMPLEMENTATION_PLAN.md) for the roadmap.
@@ -277,9 +271,62 @@ Learning schema 2 and existing history/settings are preserved. Piano contexts
 use inputMethod piano and numeric MIDI answers, separately from letter input.
 See docs/STORAGE_SCHEMA.md for the weighting formula and evidence scope.
 
-Validation: 210 tests passed, including all 194 prior tests; syntax checks passed.
-Essential Chromium checks covered wrong-octave feedback, Enter activation,
-delayed piano sequences, labels, 320 px key sizes/scrolling, recommendations,
-weak/mistake handoff, filtered statistics and reload persistence. No console
-errors or page overflow were observed. Physical touch, Safari/Firefox, actual
-background-tab transitions and browser/OS restart remain untested.
+## Install, offline use and updates
+
+Open the HTTPS deployment online and wait for **Available offline on this device**.
+All production resources are local and cached, including every existing practice
+mode and Statistics. Open the installed app online once as well.
+
+- **iPhone:** in Safari, Share → Add to Home Screen → enable **Open as Web App**
+  if offered → Add. See [Apple's instructions](https://support.apple.com/guide/iphone/iphea86e5236/ios).
+- **Android:** in Chrome, menu → Install and create shortcut (or Add to home screen) → Install.
+- **Desktop:** in Chrome/Edge, use the address-bar install icon or browser app
+  installation menu. See [Chrome's instructions](https://support.google.com/chrome/answer/9658361).
+
+Updates download in the background. **Update now** activates a ready version only
+when every open trainer tab has finished practice and saved pending evidence.
+Settings → **Check for updates** checks manually. Failed downloads keep the
+previous application usable; cache cleanup never touches learning storage.
+
+After changing production HTML/JS/CSS/icons/manifest/worker, run:
+
+```powershell
+npm.cmd run prepare:offline
+npm.cmd test
+```
+
+Commit the generated `sw-assets.js` together with the changed application files
+when publishing manually. This refreshes the content-derived cache version and
+complete asset list; the test suite detects stale output. No bundler is required.
+GitHub Pages must serve the repository root over HTTPS, including `sw.js`,
+`sw-assets.js`, manifest and assets, under the same deployment directory.
+
+## Backup, restore and reset
+
+Settings → **Data Management** exports all validated saved evidence, pending
+in-memory answers and preferences to a dated JSON file. Keep periodic copies
+outside browser storage and transfer the file manually between devices.
+
+Choose a backup to validate and preview it before confirmation. **Merge** keeps
+current preferences, adds compatible evidence and deduplicates IDs. Conflicting
+records are identified and block merge. **Replace** explicitly uses the backup's
+history and preferences. Both require a separate acknowledgement and confirmation.
+Imported unfinished sessions become interrupted; answers remain recorded.
+
+**Reset learning statistics** also requires acknowledgement and confirmation; it
+keeps preferences. Canceling, invalid input, changed previews and failed staging
+leave the active data unchanged. Other open tabs must reload after a data change.
+Learning schema 1 migrations are supported; future unsupported formats are rejected.
+
+Backups are limited to 20 MB. Imports need free LocalStorage capacity to stage a
+complete copy. Previous generations are retained for safe failure recovery and
+consume space; reset clears active statistics but does not reclaim those copies.
+Browser-local storage and offline caches can still be cleared or evicted; neither
+installation nor a retained generation replaces a downloaded backup.
+
+Manual iPhone verification after deployment: launch from Home Screen online,
+wait for offline readiness, enable airplane mode, close/reopen, complete a short
+practice and reopen Statistics. Verify saved answers, export to Files, preview the
+same file, and merge without increasing counts. Reconnect, finish all trainer
+sessions and check update activation on a later application build. Browser and
+Home Screen storage may differ; transfer progress with a backup when necessary.
