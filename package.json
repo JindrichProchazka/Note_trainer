@@ -1,0 +1,12 @@
+{
+  "name": "note-trainer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Dependency-free piano note recognition practice.",
+  "scripts": {
+    "start": "node scripts/serve.mjs",
+    "test": "node --test"
+  },
+  "engines": { "node": ">=22" }
+}

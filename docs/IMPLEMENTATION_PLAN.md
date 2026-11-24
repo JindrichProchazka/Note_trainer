@@ -1340,7 +1340,7 @@ A milestone is complete when:
 
 
 
-Milestone 1: Not started
+Milestone 1: Complete (2026-11-24)
 
 Milestone 2: Not started
 
@@ -1360,3 +1360,42 @@ Milestone 8: Not started
 
 Currently authorized milestone: Milestone 1 only.
 
+
+
+### Milestone 1 implementation notes — 2026-11-24
+
+Milestone 1 is complete.
+
+- Implemented the responsive Home and Practice screens using HTML, CSS and vanilla
+  JavaScript ES modules, with no production dependencies or build step.
+- Implemented the written-note/MIDI data model, original vector treble clef,
+  diatonic staff positions, appropriate stem directions and the C4 ledger line.
+- Implemented uniformly generated natural notes C4–C5, letter buttons,
+  physical A–G keyboard input, unlimited practice, immediate feedback,
+  automatic progression and duplicate-answer protection.
+- Implemented basic session counters, pause/resume and hidden-page pause handling.
+  Session-only response measurements and light/dark/system themes were included
+  because they were explicitly requested for this implementation.
+- Session attempts and themes remain in memory. Milestone 3 persistence,
+  learning history and detailed statistics have not been started.
+- Added a dependency-free local static server and relative application URLs,
+  validated under the expected /Note_trainer/ project path.
+- Updated README.md with exact launch/test commands, architecture, validation,
+  deployment compatibility and known limitations.
+
+Validation: 40 automated tests passed on Node.js 24.20.0. Embedded Chromium browser
+checks covered all eight notes, correct/incorrect feedback, keyboard and mouse
+input, double-click protection, automatic/manual progression, pause/resume,
+confirmed reset, keyboard skip navigation, themes, and responsive layouts at
+320, 375, 390, 768 and 1280 CSS-pixel widths. No horizontal overflow or console
+errors/warnings were observed. The smallest measured answer target was about
+56 × 54 CSS pixels.
+
+Physical mobile devices and Safari/Firefox are untested. Actual hidden-tab
+visibility transitions could not be validated in the focused embedded browser;
+pause timing is covered by automated session tests and manual pause/resume.
+GitHub Pages compatibility was checked locally, not through a published site.
+
+The additional ledger-line ranges, bass clef, naming options and session modes
+remain in Milestone 2. PWA installation and offline caching remain in Milestone 7.
+Milestones 2–8 remain not started. No commits or pushes were made.
