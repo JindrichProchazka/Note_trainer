@@ -28,3 +28,17 @@ export const PRACTICE_NOTES = Object.freeze([
   ...LETTERS.map(letter => createNote(letter, 4)),
   createNote('C', 5),
 ]);
+
+/** Natural pitches selected by sounding MIDI bounds; endpoints may fall between naturals. */
+export function naturalNotesBetween(minMidi, maxMidi) {
+  if (!Number.isInteger(minMidi) || !Number.isInteger(maxMidi) ||
+      minMidi < 0 || maxMidi > 127 || minMidi > maxMidi) throw new RangeError('Invalid MIDI range');
+  const notes = [];
+  for (let octave = -1; octave <= 9; octave++) {
+    for (const letter of LETTERS) {
+      const midi = 12 * (octave + 1) + PITCH_CLASSES[letter];
+      if (midi >= minMidi && midi <= maxMidi) notes.push(createNote(letter, octave));
+    }
+  }
+  return Object.freeze(notes);
+}

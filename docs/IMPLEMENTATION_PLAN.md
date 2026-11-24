@@ -1342,7 +1342,7 @@ A milestone is complete when:
 
 Milestone 1: Complete (2026-11-24)
 
-Milestone 2: Not started
+Milestone 2: Complete (2026-11-24)
 
 Milestone 3: Not started
 
@@ -1358,7 +1358,7 @@ Milestone 8: Not started
 
 
 
-Currently authorized milestone: Milestone 1 only.
+Currently authorized milestone: Milestone 2 only, including explicitly requested settings persistence.
 
 
 
@@ -1399,3 +1399,58 @@ GitHub Pages compatibility was checked locally, not through a published site.
 The additional ledger-line ranges, bass clef, naming options and session modes
 remain in Milestone 2. PWA installation and offline caching remain in Milestone 7.
 Milestones 2–8 remain not started. No commits or pushes were made.
+
+
+### Milestone 2 implementation notes — 2026-11-24
+
+Milestone 2 — Extended Note Recognition is complete. The user's Milestone 2
+request also explicitly authorized lightweight settings persistence.
+
+- Added bass and randomly selected mixed clefs, natural-note ranges and accurate
+  ledger lines above/below both staves. Treble reference lines remain E4/F5;
+  bass uses G2/A3. Middle C is correct in either clef.
+- Retained the original visual identity and treble vector. Both local original
+  clef vectors use the repository's MIT license. Extreme custom pitches expand
+  the SVG viewport, and distant-note stems extend toward the middle staff line.
+- Added all eight requested presets and Custom, with independent mixed-clef
+  ranges. Custom natural-note endpoints span C2–C6 and are validated before use.
+- Added Czech/German and international presentation/input naming, defaulting to
+  Czech/German for new users. Canonical written spelling and answers remain
+  international; Czech B is not accepted as an alias for H.
+- Added Free practice with manual finish, Timed practice, fixed question counts,
+  remaining time/progress, terminal input guards and automatic completion.
+  Custom limits are 5–3600 whole seconds or 1–1000 questions.
+- Added dedicated summaries with configuration, duration, counts, accuracy,
+  median correct response, correct notes/minute and pitch/clef-specific misses.
+  Repeat, different-session and Home actions are implemented.
+- Added Settings for theme, default naming, preset and session type. The dedicated
+  notetrainer.settings schemaVersion 1 envelope is validated and preserved when
+  unreadable or unsupported; denied/full storage falls back to in-memory use.
+  No persistent attempts, learning history or long-term statistics were added.
+- Session configuration is an immutable snapshot. Defaults apply to new sessions;
+  themes update immediately. Inactive configuration controls cannot block a valid
+  selected exercise. Random generation retains a single-pitch fallback.
+- Monotonic timing starts on question readiness, excludes paused/hidden time, and
+  excludes feedback from response measurements. Timed expiry is checked in the
+  model on input as well as by UI timers. Final count completion freezes duration
+  on the last answer before showing its feedback and summary.
+- Updated README.md, version/metadata and the detailed validation report at
+  docs/validation/MILESTONE_2.md, including a complete file inventory, manual
+  verification instructions and decisions for the later Milestone 3 data layer.
+
+Validation: the original 40 tests passed before implementation. The final suite
+passes 95 tests on Node.js 24.20.0, with JavaScript syntax and whitespace checks
+also passing. Browser checks exercised every preset, both clefs, independent mixed
+ranges, all session types, naming, duplicate protection, summaries, preferences
+across reload, theme selection, navigation and restart/cancel behavior. All screens
+fit at 320 and 1280 pixels, with practice also checked at 375, 390, 540, 640 and 768
+pixels. No horizontal overflow or console errors/warnings were observed.
+
+Physical mobile touch, Safari/Firefox, browser restart and real background-tab
+transitions remain unverified. The embedded browser emulates focus; countdown
+pause/resume was tested through the UI and hidden-time exclusion through
+deterministic session tests. Published GitHub Pages hosting was not modified;
+relative resource loading was verified locally under /Note_trainer/.
+
+Milestones 3–8 remain not started. PWA/offline functionality remains in Milestone 7.
+No commits, pushes or publication were performed.

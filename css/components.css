@@ -79,3 +79,58 @@ dialog::backdrop { background: rgb(0 0 0 / 45%); }
 dialog p { margin-top: 12px; font-size: .9rem; }
 .dialog-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 12px; margin-top: 24px; }
 .practice-heading > .button { flex-shrink: 0; }
+
+
+/* Milestone 2 forms and session views reuse the original palette and controls. */
+.configuration-view, .settings-view, .summary-view { max-width: 820px; margin: 0 auto; }
+.configuration-view > h1, .settings-view > h1, .summary-view > h1 { margin-top: 12px; font-size: clamp(2rem, 5vw, 3rem); }
+.form-card { margin-top: 26px; padding: 24px; }
+.form-field { display: flex; flex-direction: column; gap: 8px; min-width: 0; margin-bottom: 20px; color: var(--ink); font-size: .83rem; font-weight: 600; }
+.form-field select, .form-field input {
+  display: block; min-width: 0; width: 100%; max-width: 100%; min-height: 48px;
+  padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px;
+  font: inherit; font-weight: 400; background: var(--surface); color: var(--ink);
+}
+input:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.form-grid { display: grid; gap: 0 20px; }
+.form-hint { color: var(--muted); font-size: .76rem; font-weight: 400; line-height: 1.6; }
+.form-error { padding: 12px; background: var(--bad-soft); color: var(--bad); border-radius: 8px; margin: 0 0 20px; font-size: .85rem; }
+.range-description { color: var(--muted); font-size: .82rem; line-height: 1.6; overflow-wrap: anywhere; margin-bottom: 20px; }
+.quick-preset { margin: 4px 0 12px; }
+.exercise-card .range-description { margin-bottom: 0; }
+.exercise-card .tags { margin: 14px 0 24px; }
+.range-fields { min-width: 0; border: 1px solid var(--line); border-radius: 10px; margin: 18px 0; padding: 16px 16px 0; }
+.range-fields legend { padding: 0 8px; color: var(--muted); font-size: .8rem; font-weight: 600; }
+.session-options { border-top: 1px solid var(--line); padding-top: 20px; }
+.settings-status { color: var(--muted); font-size: .8rem; margin-top: 16px; }
+.storage-banner { max-width: 1024px; margin: 16px auto 0; padding: 12px 20px; color: var(--muted); background: var(--surface-soft); font-size: .8rem; }
+.practice-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin: 18px 0; }
+.session-progress { color: var(--accent); font-size: .85rem; font-weight: 650; font-variant-numeric: tabular-nums; }
+.practice-actions { display: flex; gap: 8px; margin-left: auto; }
+.practice-actions .button { padding: 9px 14px; }
+.button:disabled { opacity: .6; cursor: default; }
+.summary-configuration, .missed-card { padding: 24px; margin-top: 24px; }
+.summary-configuration h2 { margin: 10px 0; }
+.summary-configuration p + p { margin-top: 8px; font-size: .85rem; }
+.summary-metrics { margin-top: 22px; }
+.summary-metrics > div { min-width: 0; }
+.summary-metrics dd { overflow-wrap: anywhere; }
+.missed-card > .muted { margin-top: 12px; font-size: .9rem; }
+.missed-list { list-style: none; padding: 0; margin: 16px 0 0; }
+.missed-list li { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 12px 0; border-top: 1px solid var(--line); font-size: .85rem; }
+.missed-list li > span:first-child { overflow-wrap: anywhere; }
+.summary-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+@media (min-width: 540px) {
+  .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .form-card { padding: 30px; }
+  .summary-metrics > div:nth-child(4n + 1) { border-left: 0; }
+  .summary-metrics > div:nth-child(n + 5) { border-top: 1px solid var(--line); }
+}
+@media (min-width: 640px) and (max-width: 899px) {
+  .header-inner { gap: 16px; }
+  nav { margin-left: 0; }
+  .theme-control > span { display: none; }
+}
+@media (max-width: 360px) {
+  .form-card, .summary-configuration, .missed-card { padding: 18px; }
+}

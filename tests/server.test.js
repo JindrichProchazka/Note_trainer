@@ -24,6 +24,14 @@ test('static app and every module load correctly at a GitHub Pages project subpa
     ['/Note_trainer/js/ui/practice.js', 'text/javascript'],
     ['/Note_trainer/js/ui/strings.js', 'text/javascript'],
     ['/Note_trainer/js/ui/format.js', 'text/javascript'],
+    ['/Note_trainer/js/music/clefs.js', 'text/javascript'],
+    ['/Note_trainer/js/exercises/configuration.js', 'text/javascript'],
+    ['/Note_trainer/js/data/settings.js', 'text/javascript'],
+    ['/Note_trainer/js/ui/note-names.js', 'text/javascript'],
+    ['/Note_trainer/js/ui/config-description.js', 'text/javascript'],
+    ['/Note_trainer/js/ui/configuration.js', 'text/javascript'],
+    ['/Note_trainer/js/ui/settings.js', 'text/javascript'],
+    ['/Note_trainer/js/ui/summary.js', 'text/javascript'],
   ];
   for (const [resource, mime] of resources) {
     const response = await fetch(origin + resource);
