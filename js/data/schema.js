@@ -32,7 +32,7 @@ export function validateStoredConfiguration(input) {
   if (!isObject(input) || !isIdentifier(input.exerciseType) || !isIdentifier(input.inputMethod)) fail('Invalid exercise context');
   // Reuse current range/session validation, retaining future exercise/input identifiers.
   let config;
-  try { config = validateConfiguration(input); } catch { fail('Invalid session configuration'); }
+  try { config = validateConfiguration({ ...input, exerciseType: input.exerciseType === 'sequence' ? 'sequence' : 'single-note', inputMethod: 'letter' }); } catch { fail('Invalid session configuration'); }
   return { ...input, ...config, exerciseType: input.exerciseType, inputMethod: input.inputMethod };
 }
 
@@ -97,5 +97,36 @@ export function validateSessionRecord(record) {
       (config.sessionType === 'count' && record.attempts.length > config.questionCount) ||
       (session.completionReason === 'count' &&
         (config.sessionType !== 'count' || record.attempts.length !== config.questionCount))) fail('Inconsistent session limit');
+  validateSequences(record, config);
   return { ...record, session: { ...session, config } };
+}
+
+function validateSequences(record, config) {
+  if (config.exerciseType !== 'sequence') return;
+  if (record.sequenceEvidenceVersion !== 1 || !Array.isArray(record.sequences)) fail('Missing sequence definitions');
+  const ids = new Set(), ordinals = new Set();
+  const previousAnswers = new Map();
+  for (const sequence of record.sequences) {
+    if (!isObject(sequence) || !validId(sequence.id) || ids.has(sequence.id) ||
+        !Number.isInteger(sequence.ordinal) || sequence.ordinal < 1 || ordinals.has(sequence.ordinal) ||
+        !activeClefs(config).includes(sequence.clef) || !validTimestamp(sequence.createdAt) ||
+        !Array.isArray(sequence.notes) || sequence.notes.length < 1 || sequence.notes.length > config.sequenceLength) fail('Invalid sequence');
+    const prior = [...previousAnswers.values()].reduce((total, value) => total + value, 0);
+    const expected = config.sessionType === 'count' ? Math.min(config.sequenceLength, config.questionCount - prior) : config.sequenceLength;
+    if (sequence.notes.length !== expected) fail('Invalid final sequence length');
+    for (const spelling of sequence.notes) {
+      let note;
+      try { note = parseWrittenNote(spelling); } catch { fail('Invalid sequence spelling'); }
+      if (note.accidental !== 0 || note.midi < config.ranges[sequence.clef].minMidi ||
+          note.midi > config.ranges[sequence.clef].maxMidi) fail('Sequence outside selected range');
+    }
+    const answers = record.attempts.filter(attempt => attempt.sequenceId === sequence.id).sort((a, b) => a.itemIndex - b.itemIndex);
+    for (const [index, answer] of answers.entries()) {
+      if (answer.questionId !== sequence.id || answer.itemIndex !== index || answer.writtenNote !== sequence.notes[index] ||
+          answer.clef !== sequence.clef) fail('Mismatched sequence answer');
+    }
+    if (record.sequences.indexOf(sequence) < record.sequences.length - 1 && answers.length !== sequence.notes.length) fail('Unfinished prior sequence');
+    ids.add(sequence.id); ordinals.add(sequence.ordinal); previousAnswers.set(sequence.id, answers.length);
+  }
+  if (record.attempts.some(attempt => !ids.has(attempt.sequenceId))) fail('Missing parent sequence');
 }

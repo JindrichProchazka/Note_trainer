@@ -96,9 +96,8 @@ Context identity is `v1:<clef>:<encoded-written-note>:<exercise>:<input>`.
 Canonical written notes and submitted letters use international spelling even
 when H is displayed/typed. C4/C5, treble/bass, B#/C, exercise types and input
 methods remain distinct. Naming convention is presentation, never identity.
-Item index permits future independent items; no sequence or piano exercise is
-implemented. Future exercise/input IDs are isolated in stored evidence and cannot
-be repeated by the current single-note letter UI.
+Item index supports sequence positions. Unsupported future exercise/input IDs
+remain isolated and cannot be repeated by the current letter-answer UI.
 
 ## Persistence and interruption
 
@@ -216,3 +215,32 @@ octave; their exercise/input scope is labelled explicitly. The shared notation
 engine draws up to four notes per group, and U/L/F/M markers plus textual
 controls/legend avoid relying on color. This is a read-only learning overview,
 not sequence practice or adaptive generation.
+
+## Milestone 4 additive sequence extension
+
+Learning schema remains 2; existing v1 migrations and all M3 records/IDs/settings
+remain compatible and are not rewritten on read. New sequence records add
+`sequenceEvidenceVersion: 1` and `sequences`: immutable definitions with id,
+ordinal, clef, canonical written-note array and createdAt. Each attempt adds
+`sequenceId`; existing questionId identifies that sequence and zero-based itemIndex
+identifies its position. Definitions merge append-only and are validated against
+attempt order, clef, spelling, selected range and shortened final length.
+
+Exercise type `sequence` keeps mastery separate from `single-note`. Configuration
+snapshots/comparison keys include length, strategy, feedback and relevant interval
+variety. Completed/partial sequence counts derive from definitions and recorded
+answers; unanswered notes never become wrong attempts. Filtered sequence counts
+use the last answered note's recorded day, and the sequence's clef.
+
+Sequence answering duration is the sum of individual response intervals, excluding
+pauses, review and the brief unavailable render transitions. The first interval
+begins after the full sequence is ready; later intervals begin after the next
+active indicator is painted. Reading ahead can shorten later response times.
+Sequence active session time excludes review (single-note timing is unchanged).
+Fixed count measures notes; final targets may contain fewer than the chosen length.
+
+Delayed correctness is persisted immediately but withheld in practice until review.
+Home/Statistics/saved routes temporarily omit the current session while a delayed
+sequence has pending answers, with an explanatory notice. Review or session end
+reveals results. Reload interrupts the session and retains partial evidence.
+Quarter notes indicate pitch order only; no rhythm is assessed.

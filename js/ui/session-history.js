@@ -1,12 +1,12 @@
 import { archivedSession } from '../data/recording.js';
 import { TEXT } from './strings.js';
 import { STATS } from './statistics-strings.js';
-import { configurationDescription, sessionDescription } from './config-description.js';
+import { configurationDescription, sessionDescription, exerciseDescription } from './config-description.js';
 import { formatAccuracy, formatDuration, formatResponse } from './format.js';
 import { formatTimestamp, exerciseLabel, inputLabel } from './note-performance.js';
 import { escapeHtml as h } from './html.js';
 
-export const canRepeat = config => config.exerciseType === 'single-note' && config.inputMethod === 'letter';
+export const canRepeat = config => ['single-note', 'sequence'].includes(config.exerciseType) && config.inputMethod === 'letter';
 export function sessionHistoryMarkup(stats, view, naming, activeSessionId) {
   const pages = Math.max(1, Math.ceil(stats.history.length / 10)), page = Math.min(view.historyPage, pages - 1);
   const records = stats.history.slice(page * 10, (page + 1) * 10);
@@ -21,7 +21,7 @@ export function sessionHistoryMarkup(stats, view, naming, activeSessionId) {
         <div class="history-heading"><h3>${formatTimestamp(date)}</h3><span class="session-status" data-status="${saved.status}">${label}</span></div>
         <p class="history-preset">${h(TEXT.presets[saved.config.presetId] ?? TEXT.custom)} · ${h(sessionDescription(saved.config))}</p>
         <p class="muted">${h(configurationDescription({ ...saved.config, naming }))}</p>
-        <p class="context-caption">${h(exerciseLabel(saved.config.exerciseType))} · ${h(inputLabel(saved.config.inputMethod))}</p>
+        <p class="context-caption">${h(saved.config.exerciseType === 'sequence' ? exerciseDescription(saved.config) : exerciseLabel(saved.config.exerciseType))} · ${h(inputLabel(saved.config.inputMethod))}</p>
         <dl class="compact-metrics">${[[TEXT.practiceTime, formatDuration(summary.durationMs)], [TEXT.answered, summary.answered],
           [TEXT.accuracy, formatAccuracy(summary.accuracy)], [TEXT.medianCorrect, formatResponse(summary.medianCorrectResponseMs)]]
           .map(([label, value]) => `<div><dt>${label}</dt><dd>${h(value)}</dd></div>`).join('')}</dl>

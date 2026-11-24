@@ -1,0 +1,42 @@
+/* Sequences retain the established note geometry, palette and answer controls. */
+.sequence-count-hint { margin: 0 0 16px; }
+.sequence-options { border-bottom: 1px solid var(--line); margin-bottom: 20px; }
+.sequence-practice .practice-heading h1 { font-size: clamp(1.5rem, 4vw, 2rem); }
+.sequence-practice .practice-heading .eyebrow { margin-bottom: 5px; }
+.sequence-practice .practice-toolbar { margin: 12px 0; }
+.sequence-practice .practice-card { padding: 10px 10px 0; }
+.sequence-practice .staff-caption { margin: 5px 0 0; }
+.sequence-notation { max-height: none; margin: 0 auto; overflow: visible; }
+.sequence-note .note-number { fill: var(--muted); font-size: 14px; }
+.sequence-note .submitted-answer { fill: var(--ink); font-size: 21px; font-weight: 650; }
+.sequence-note .note-correction { fill: var(--bad); font-size: 16px; font-weight: 650; }
+.sequence-note .active-note-ring { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 2; }
+.sequence-note[data-result="correct"] .note, .sequence-note[data-result="correct"] .submitted-answer { color: var(--good); fill: var(--good); }
+.sequence-note[data-result="incorrect"] .note, .sequence-note[data-result="incorrect"] .submitted-answer { color: var(--bad); fill: var(--bad); }
+.sequence-progress { color: var(--accent); text-align: center; font-size: .8rem; font-weight: 650; margin: 5px 0; }
+.sequence-convention { color: var(--muted); text-align: center; font-size: .68rem; padding: 4px 8px 8px; }
+.sequence-practice .sequence-controls { position: sticky; bottom: 0; z-index: 2; background: var(--surface); border-top: 1px solid var(--line); padding: 6px 0 max(12px, env(safe-area-inset-bottom)); }
+.sequence-practice .sequence-controls .feedback-area { min-height: 70px; padding: 6px 4px 10px; }
+.sequence-practice .sequence-controls .feedback > p:first-child { font-size: .88rem; }
+.sequence-practice .sequence-controls .feedback > p + p { font-size: .72rem; }
+.sequence-practice .answer-buttons { gap: 6px; }
+.sequence-practice .answer-button { min-height: 48px; }
+.sequence-practice .practice-metrics { margin-top: 16px; }
+.sequence-practice .sequence-notation { scroll-margin-bottom: 210px; scroll-margin-top: 8px; }
+.sequence-text-alternative { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.sequence-results { padding: 24px; margin-top: 24px; }
+.saved-sequence { border-top: 1px solid var(--line); margin-top: 12px; }
+.saved-sequence > p, .saved-sequence li { font-size: .8rem; }
+.saved-sequence ol { list-style: none; padding: 0; }
+.saved-sequence li { margin: 9px 0; }
+.sequence-pending-notice { padding: 12px 16px; border: 1px solid var(--line); border-radius: 10px; color: var(--muted); font-size: .8rem; margin: 16px 0; }
+@media (min-width: 640px) {
+  .sequence-practice .practice-card { padding: 12px 24px 0; }
+  .sequence-practice .sequence-controls { padding-top: 8px; }
+  .sequence-practice .sequence-controls .feedback-area { min-height: 72px; }
+  .sequence-practice .sequence-notation { scroll-margin-bottom: 170px; }
+}
+@media (max-width: 360px) {
+  .sequence-practice .practice-actions .button { padding: 8px 12px; }
+  .sequence-results { padding: 16px; }
+}

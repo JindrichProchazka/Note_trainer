@@ -1,10 +1,11 @@
+import { SEQ } from './sequence-strings.js';
 import { naturalNotesBetween } from '../music/notes.js';
 import { renderNotation } from '../music/notation.js';
 import { TEXT } from './strings.js';
 import { STATS } from './statistics-strings.js';
 import { noteName } from './note-names.js';
 import { presetOptions } from './configuration.js';
-import { configurationDescription, sessionDescription } from './config-description.js';
+import { configurationDescription, sessionDescription, exerciseDescription } from './config-description.js';
 import { formatAccuracy, formatDuration, formatResponse } from './format.js';
 import { escapeHtml as h } from './html.js';
 
@@ -26,9 +27,12 @@ export function homeMarkup(session, quickConfig, persistent = null) {
     </div>
     <div class="home-grid">
       <section class="card exercise-card" aria-labelledby="exercise-title">
-        <p class="eyebrow">${TEXT.exerciseLabel}</p><h2 id="exercise-title">${TEXT.exerciseTitle}</h2>
+        <p class="eyebrow">${TEXT.exerciseLabel}</p><h2 id="exercise-title">${quickConfig.exerciseType === 'sequence' ? SEQ.modes.sequence : TEXT.exerciseTitle}</h2>
+        <label class="form-field quick-preset" for="quick-exercise">${SEQ.mode}
+          <select id="quick-exercise">${Object.entries(SEQ.modes).map(([value, label]) => `<option value="${value}"${value === quickConfig.exerciseType ? ' selected' : ''}>${label}</option>`).join('')}</select></label>
         <label class="form-field quick-preset" for="quick-preset">${TEXT.preset}
           <select id="quick-preset">${presetOptions(quickConfig.presetId, false)}</select></label>
+        ${quickConfig.exerciseType === 'sequence' ? `<p class="range-description">${exerciseDescription(quickConfig)}</p>` : ''}
         <p class="range-description">${configurationDescription(quickConfig)}</p>
         <ul class="tags"><li>${TEXT.naturalNotes}</li><li>${sessionDescription(quickConfig)}</li><li>${TEXT.namingShort[quickConfig.naming]}</li></ul>
         <div class="exercise-actions">
@@ -57,8 +61,8 @@ export function homeMarkup(session, quickConfig, persistent = null) {
     ${recentConfig ? `<section class="card recent-practice" aria-labelledby="recent-title">
       <div><p class="eyebrow" id="recent-title">${STATS.recentlyUsed}</p>
         <p>${h(configurationDescription({ ...recentConfig, naming: quickConfig.naming }))}</p>
-        <p class="muted">${h(sessionDescription(recentConfig))}</p></div>
-      ${recentConfig.exerciseType === 'single-note' && recentConfig.inputMethod === 'letter'
+        <p class="muted">${h(exerciseDescription(recentConfig))} · ${h(sessionDescription(recentConfig))}</p></div>
+      ${['single-note', 'sequence'].includes(recentConfig.exerciseType) && recentConfig.inputMethod === 'letter'
         ? `<button class="button subtle" data-action="repeat-recent">${STATS.repeatRecent}</button>` : ''}
     </section>` : ''}
   </section>`;

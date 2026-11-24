@@ -23,5 +23,7 @@ export function configurationKey(config) {
     sessionType: config.sessionType,
     limit: config.sessionType === 'timed' ? config.durationMs : config.sessionType === 'count' ? config.questionCount : null,
     exerciseType: config.exerciseType, inputMethod: config.inputMethod,
+    ...(config.exerciseType === 'sequence' ? { sequenceLength: config.sequenceLength, strategy: config.sequenceStrategy, feedback: config.feedbackMode,
+      ...(config.sequenceStrategy === 'intervals' ? { intervalMix: config.intervalMix } : {}) } : {}),
   });
 }

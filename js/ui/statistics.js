@@ -1,9 +1,10 @@
+import { SEQ } from './sequence-strings.js';
 import { TEXT } from './strings.js';
 import { STATS } from './statistics-strings.js';
 import { escapeHtml as h, optionList } from './html.js';
 import { buildStatistics, chartWindow, DEFAULT_FILTERS } from '../learning/statistics.js';
 import { configurationKey } from '../learning/context.js';
-import { configurationDescription, sessionDescription } from './config-description.js';
+import { configurationDescription, sessionDescription, exerciseDescription } from './config-description.js';
 import { formatAccuracy, formatDuration, formatResponse } from './format.js';
 import { chartsMarkup, formatRate } from './charts.js';
 import { notePerformanceMarkup, exerciseLabel, inputLabel } from './note-performance.js';
@@ -14,11 +15,11 @@ export function createStatisticsView() {
     clef: 'treble', octave: 4, sort: 'pitch', selectedContext: null };
 }
 function filterMarkup(data, filters, naming) {
-  const exercises = [...new Set(['single-note', ...data.sessions.map(record => record.session.config.exerciseType)])];
+  const exercises = [...new Set(['single-note', 'sequence', ...data.sessions.map(record => record.session.config.exerciseType)])];
   const inputs = [...new Set(['letter', ...data.sessions.map(record => record.session.config.inputMethod)])];
   const configs = new Map(data.sessions.map(record => [configurationKey(record.session.config), record.session.config]));
   const configOptions = [...configs].map(([key, config]) => [encodeURIComponent(key),
-    (TEXT.presets[config.presetId] ?? TEXT.custom) + ' · ' + configurationDescription({ ...config, naming }) + ' · ' + sessionDescription(config)]);
+    (TEXT.presets[config.presetId] ?? TEXT.custom) + ' · ' + configurationDescription({ ...config, naming }) + ' · ' + sessionDescription(config) + (config.exerciseType === 'sequence' ? ' · ' + exerciseDescription(config) : '')]);
   const field = (id, title, options, selected) => `<label class="form-field" for="${id}">${title}
     <select id="${id}" data-stat-filter>${optionList(options, selected)}</select></label>`;
   return `<form id="statistics-filters" class="card statistics-filters">
@@ -50,6 +51,9 @@ function overviewMarkup(stats, view) {
     [STATS.practiced, values.practicedContexts, 'overview-practiced'],
     [STATS.mastered, values.masteredContexts, 'overview-mastered'],
   ];
+  if (stats.sequences.length || stats.filters.exerciseType === 'sequence') metrics.push(
+    [SEQ.completed, values.completedSequences, 'overview-sequences'],
+    [SEQ.partial, values.partialSequences, 'overview-partial-sequences']);
   return `<section class="statistics-overview" aria-label="${STATS.tabs.overview}">
     <dl class="metrics stats-metrics">${metrics.map(values => metric(...values)).join('')}</dl>
     ${!values.answered && values.durationMs === 0 ? `<p class="empty-state">${STATS.overviewEmpty}</p>` : ''}
@@ -64,10 +68,12 @@ export function statisticsMarkup(data, view, naming, activeSessionId = null, now
     <p class="eyebrow">${STATS.eyebrow}</p>
     <h1 id="statistics-title" tabindex="-1">${STATS.title}</h1>
     <p class="lead">${STATS.description}</p>
+    ${data.withheld ? `<p class="sequence-pending-notice" role="status">${SEQ.withheld}</p>` : ''}
     ${filterMarkup(data, stats.filters, naming)}
+    ${stats.sequences.length || stats.filters.exerciseType === 'sequence' ? `<p class="stats-hint">${SEQ.timingHint}</p>` : ''}
     <p class="stats-hint stats-scope">${STATS.scope}</p>
     ${stats.configurations.length > 1 ? `<details class="configuration-breakdown"><summary>${STATS.configurationCount(stats.configurations.length)}</summary>
-      <ul>${stats.configurations.map(config => `<li>${h(configurationDescription({ ...config, naming }))} · ${h(sessionDescription(config))}</li>`).join('')}</ul></details>` : ''}
+      <ul>${stats.configurations.map(config => `<li>${h(configurationDescription({ ...config, naming }))} · ${h(sessionDescription(config))} · ${h(exerciseDescription(config))}</li>`).join('')}</ul></details>` : ''}
     <div class="stats-tabs" role="group" aria-label="${STATS.navigation}">
       ${Object.entries(STATS.tabLabels).map(([tab, label]) => `<button class="button" data-action="statistics-tab" data-stat-tab="${tab}"
         aria-pressed="${view.tab === tab}">${label}</button>`).join('')}

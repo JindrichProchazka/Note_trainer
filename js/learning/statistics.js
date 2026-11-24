@@ -1,3 +1,4 @@
+import { sequenceResults } from '../session/sequence-statistics.js';
 import { parseWrittenNote } from '../music/notes.js';
 import { median, learningState, MASTERY_RULES } from './mastery.js';
 import { compareAttempts, configurationKey, contextId } from './context.js';
@@ -97,11 +98,16 @@ export function buildStatistics(data, selected = {}, now = Date.now()) {
   for (const record of eligible.filter(item => includedIds.has(item.session.id))) {
     includedConfigurations.set(configurationKey(record.session.config), record.session.config);
   }
+  const sequences = eligible.flatMap(record => sequenceResults(record.sequences, record.attempts)).filter(sequence =>
+    matches(sequence.clef, filters.clef) && sequence.lastAttempt && withinDays(sequence.lastAttempt.day, bounds));
   return {
+    sequences,
     filters, bounds, attempts, activity, daily, notes, history,
     configurations: [...includedConfigurations.values()],
     overview: {
       ...metricSummary(attempts, sum(activity.map(part => part.durationMs))),
+      completedSequences: sequences.filter(sequence => sequence.complete).length,
+      partialSequences: sequences.filter(sequence => sequence.partial).length,
       completedSessions: history.filter(record => record.session.status === 'completed').length,
       practicedContexts: notes.length,
       masteredContexts: notes.filter(note => note.state === 'mastered').length,

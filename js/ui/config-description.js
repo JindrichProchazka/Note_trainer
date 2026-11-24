@@ -1,3 +1,4 @@
+import { SEQ } from './sequence-strings.js';
 import { naturalNotesBetween } from '../music/notes.js';
 import { activeClefs } from '../exercises/configuration.js';
 import { TEXT } from './strings.js';
@@ -17,4 +18,11 @@ export function sessionDescription(config) {
   if (config.sessionType === 'timed') return `${TEXT.sessionTypes.timed} · ${formatDuration(config.durationMs)}`;
   if (config.sessionType === 'count') return `${TEXT.sessionTypes.count} · ${TEXT.questions(config.questionCount)}`;
   return TEXT.sessionTypes.unlimited;
+}
+
+export function exerciseDescription(config) {
+  if (config.exerciseType !== 'sequence') return SEQ.modes['single-note'];
+  return SEQ.modes.sequence + ' · ' + SEQ.sequenceConfig(config.sequenceLength,
+    SEQ.strategies[config.sequenceStrategy], SEQ.feedbackModes[config.feedbackMode]) +
+    (config.sequenceStrategy === 'intervals' ? ' · ' + SEQ.intervalMixes[config.intervalMix] : '');
 }

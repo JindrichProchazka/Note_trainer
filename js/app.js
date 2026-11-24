@@ -1,5 +1,10 @@
+import { visibleLearningData } from './ui/learning-disclosure.js';
+import { SequenceSession } from './session/sequence-session.js';
+import { SequencePracticeView } from './ui/sequence-practice.js';
+import { SEQ } from './ui/sequence-strings.js';
+import { createAnswerInput } from './ui/answer-input.js';
 import { PracticeSession } from './session/session.js';
-import { FEEDBACK_MS, PRESETS } from './config.js';
+import { FEEDBACK_MS, PRESETS, SEQUENCE_DEFAULTS } from './config.js';
 import { configurationFromSettings, validateConfiguration } from './exercises/configuration.js';
 import { createSettingsStore, validateSettings } from './data/settings.js';
 import { createLearningStore, tabIdentity } from './data/storage.js';
@@ -8,7 +13,6 @@ import { LEARNING_KEY, SESSION_PREFIX } from './data/schema.js';
 import { recentHomeStatistics } from './learning/statistics.js';
 import { TEXT } from './ui/strings.js';
 import { STATS } from './ui/statistics-strings.js';
-import { keyboardAnswer } from './ui/note-names.js';
 import { homeMarkup } from './ui/home.js';
 import { practiceMarkup, PracticeView } from './ui/practice.js';
 import { configurationMarkup, readConfiguration } from './ui/configuration.js';
@@ -26,12 +30,17 @@ const learningStore = createLearningStore();
 learningStore.load();
 learningStore.recoverInterrupted(identity.tabId, identity.ownerId);
 const initialConfig = configurationFromSettings(loaded.settings);
+const recentConfiguration = recentHomeStatistics(learningStore.snapshot()).recentConfig;
+const answerInput = createAnswerInput();
 const state = {
   session: createSession(initialConfig), screen: 'home',
   settings: loaded.settings, storageStatus: loaded.status,
+  quickExercise: canRepeat(recentConfiguration ?? {}) ? recentConfiguration.exerciseType : 'single-note',
+  sequenceOptions: { ...SEQUENCE_DEFAULTS, ...(recentConfiguration?.exerciseType === 'sequence' ? recentConfiguration : {}) },
   quickPreset: loaded.settings.defaultPreset, draft: initialConfig, pendingConfig: null,
   statistics: createStatisticsView(), archiveId: null,
 };
+state.draft = quickConfiguration();
 let practiceView = null, feedbackTimer = null, deadlineTimer = null, readyFrame = null;
 const systemTheme = matchMedia('(prefers-color-scheme: dark)');
 const app = document.querySelector('#app');
@@ -66,7 +75,8 @@ app.innerHTML = `<a class="skip-link" href="#main">${TEXT.skip}</a>
 const main = document.querySelector('#main'), resetDialog = document.querySelector('#reset-dialog');
 
 function createSession(config) {
-  return new PracticeSession({ config, onChange: current => {
+  const Session = config.exerciseType === 'sequence' ? SequenceSession : PracticeSession;
+  return new Session({ config, onChange: current => {
     const record = recordFromSession(current, identity);
     if (record) learningStore.saveRecord(record);
     updateStorageStatus();
@@ -99,7 +109,7 @@ function updatePreferences(patch) {
   state.storageStatus = settingsStore.save(state.settings).status;
   if (Object.keys(patch).some(key => key !== 'theme')) {
     state.quickPreset = state.settings.defaultPreset;
-    state.draft = configurationFromSettings(state.settings);
+    state.draft = quickConfiguration();
   }
   applyTheme(); updateStorageStatus();
 }
@@ -137,6 +147,7 @@ function scheduleReady() {
 }
 function scheduleFeedback() {
   const session = state.session;
+  if (session.config.exerciseType === 'sequence') return;
   if (session.phase !== 'feedback' && !(session.phase === 'complete' && session.completionReason === 'count')) return;
   const attempt = session.attempts.at(-1);
   feedbackTimer = setTimeout(advance, attempt.correct ? FEEDBACK_MS.correct : FEEDBACK_MS.incorrect);
@@ -144,19 +155,29 @@ function scheduleFeedback() {
 function updatePractice() {
   practiceView.update(state.session); scheduleReady(); scheduleFeedback(); scheduleDeadline();
 }
+function quickConfiguration() {
+  return validateConfiguration({ ...SEQUENCE_DEFAULTS, ...state.sequenceOptions,
+    ...configurationFromSettings(state.settings, state.quickPreset), exerciseType: state.quickExercise });
+}
+function displayData() { return visibleLearningData(learningStore.snapshot(), state.session); }
 function homeView() {
-  return homeMarkup(state.session, configurationFromSettings(state.settings, state.quickPreset),
-    recentHomeStatistics(learningStore.snapshot()));
+  const data = displayData();
+  const persistent = recentHomeStatistics(data);
+  persistent.recentConfig = recentHomeStatistics(learningStore.snapshot()).recentConfig;
+  return homeMarkup(state.session, quickConfiguration(), persistent) +
+    (data.withheld ? '<p class="sequence-pending-notice" role="status">' + SEQ.withheld + '</p>' : '');
 }
 function renderStatistics(focusSelector = null) {
-  main.innerHTML = statisticsMarkup(learningStore.snapshot(), state.statistics, state.settings.naming,
+  main.innerHTML = statisticsMarkup(displayData(), state.statistics, state.settings.naming,
     state.session.phase === 'paused' ? state.session.id : null);
   if (focusSelector) main.querySelector(focusSelector)?.focus({ preventScroll: true });
 }
-function findSaved(id) { return learningStore.snapshot().sessions.find(record => record.session.id === id); }
+function findSaved(id) { return displayData().sessions.find(record => record.session.id === id); }
 
 function showScreen(requested, { focus = true } = {}) {
   clearPending();
+  practiceView?.dispose?.();
+  answerInput.reset();
   let screen = requested, desiredHash = requested;
   if (requested.startsWith('session/')) {
     try { state.archiveId = decodeURIComponent(requested.slice(8)); } catch { state.archiveId = null; }
@@ -188,7 +209,7 @@ function showScreen(requested, { focus = true } = {}) {
     if (document.hidden) state.session.pause();
     if (state.session.tick()) { showScreen('summary', { focus }); return; }
     main.innerHTML = practiceMarkup(state.session.config);
-    practiceView = new PracticeView(main); updatePractice();
+    practiceView = state.session.config.exerciseType === 'sequence' ? new SequencePracticeView(main) : new PracticeView(main); updatePractice();
   }
   const navScreen = screen === 'saved-summary' ? 'statistics' : ['configure', 'summary'].includes(screen) ? 'practice' : screen;
   document.querySelectorAll('nav [data-action]').forEach(link => {
@@ -204,6 +225,9 @@ function navigate(screen) {
 function startSession(config) {
   state.pendingConfig = null; resetDialog.close(); clearPending();
   state.session.interrupt(); // Previous unfinished evidence stays in history.
+  state.quickExercise = config.exerciseType;
+  if (config.exerciseType === 'sequence') state.sequenceOptions = config;
+  state.draft = config;
   state.session = createSession(config); state.session.start(); navigate('practice');
 }
 function requestSession(config) {
@@ -225,7 +249,7 @@ function advance() {
 function submit(answer) {
   if (state.screen !== 'practice' || document.hidden || resetDialog.open) return;
   const attempt = state.session.submit(answer);
-  if (!attempt) { if (state.session.phase === 'complete') showSummary(); return; }
+  if (!attempt) { if (state.session.phase === 'complete' && !state.session.holdFinalReview) showSummary(); return; }
   clearPending(); updatePractice();
 }
 function pausePractice() {
@@ -241,15 +265,15 @@ function rerenderConfiguration(focusId) {
 
 app.addEventListener('click', event => {
   const answer = event.target.closest('[data-answer]');
-  if (answer) { submit(answer.dataset.answer); return; }
+  if (answer) { if (answerInput.pointerAllowed(event)) submit(answer.dataset.answer); return; }
   const control = event.target.closest('[data-action]');
   if (!control) return;
   event.preventDefault();
   const action = control.dataset.action;
   if (['home', 'practice', 'statistics', 'settings', 'summary'].includes(action)) navigate(action);
-  else if (action === 'quick-start') requestSession(configurationFromSettings(state.settings, state.quickPreset));
+  else if (action === 'quick-start') requestSession(quickConfiguration());
   else if (action === 'customize') {
-    state.draft = { ...configurationFromSettings(state.settings, state.quickPreset), presetId: 'custom' }; navigate('configure');
+    state.draft = { ...quickConfiguration(), presetId: 'custom' }; navigate('configure');
   } else if (action === 'different') { state.draft = state.session.config; navigate('configure'); }
   else if (action === 'repeat') requestSession(state.session.config);
   else if (action === 'repeat-recent') {
@@ -291,7 +315,11 @@ app.addEventListener('click', event => {
 });
 resetDialog.addEventListener('cancel', () => { state.pendingConfig = null; });
 app.addEventListener('change', event => {
-  if (event.target.id === 'quick-preset') {
+  if (event.target.id === 'quick-exercise') {
+    state.quickExercise = event.target.value;
+    state.draft = quickConfiguration();
+    main.innerHTML = homeView(); main.querySelector('#quick-exercise').focus({ preventScroll: true });
+  } else if (event.target.id === 'quick-preset') {
     state.quickPreset = event.target.value; main.innerHTML = homeView();
     main.querySelector('#quick-preset').focus({ preventScroll: true });
   } else if (event.target.closest('#settings-form')) updatePreferences({ [event.target.name]: event.target.value });
@@ -323,14 +351,17 @@ app.addEventListener('submit', event => {
   }
 });
 document.addEventListener('keydown', event => {
+  if (event.repeat && ['Enter', ' '].includes(event.key) && event.target.closest('[data-answer]')) event.preventDefault();
   if (event.repeat || event.altKey || event.ctrlKey || event.metaKey || state.screen !== 'practice' || document.hidden || resetDialog.open) return;
   if (event.target.closest('input, select, textarea, [contenteditable="true"]')) return;
-  const answer = keyboardAnswer(event.key, state.session.config.naming);
+  const answer = answerInput.keydown(event, state.session.config.naming);
   if (answer) { event.preventDefault(); submit(answer); }
 });
+document.addEventListener('keyup', event => answerInput.keyup(event));
+window.addEventListener('blur', () => answerInput.reset());
 document.addEventListener('visibilitychange', () => {
   if (document.hidden && state.screen === 'practice') {
-    clearPending(); state.session.pause(); practiceView.update(state.session);
+    answerInput.reset(); clearPending(); state.session.pause(); practiceView.update(state.session);
   }
 });
 window.addEventListener('pagehide', () => { clearPending(); state.session.interrupt(); });
@@ -353,7 +384,7 @@ const initialScreen = location.hash.slice(1) || 'home';
 showScreen(validRoute(initialScreen) ? initialScreen : 'home', { focus: false });
 setInterval(() => {
   if (state.screen !== 'practice' || document.hidden) return;
-  if (state.session.tick() && !(state.session.completionReason === 'count' && feedbackTimer !== null)) { showSummary(); return; }
+  if (state.session.tick() && !state.session.holdFinalReview && !(state.session.completionReason === 'count' && feedbackTimer !== null)) { showSummary(); return; }
   practiceView?.updateStatistics(state.session);
 }, 100);
 setInterval(() => { if (!document.hidden) state.session.checkpoint(); }, 1000);

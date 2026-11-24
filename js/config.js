@@ -32,3 +32,20 @@ export const SESSION_LIMITS = Object.freeze({
 export const TIMED_PRESETS = Object.freeze([30, 60, 120, 300]);
 export const COUNT_PRESETS = Object.freeze([10, 25, 50, 100]);
 export const FEEDBACK_MS = Object.freeze({ correct: 900, incorrect: 2000 });
+
+export const SEQUENCE_LENGTHS = Object.freeze([3, 5, 8, 12, 16]);
+export const SEQUENCE_DEFAULTS = Object.freeze({
+  sequenceLength: 5, sequenceStrategy: 'random', feedbackMode: 'immediate', intervalMix: 'balanced',
+});
+export const SEQUENCE_STRATEGIES = Object.freeze({
+  random: Object.freeze({}),
+  stepwise: Object.freeze({ adjacentWeight: .85 }),
+  melodic: Object.freeze({ contour: Object.freeze([1, 1, 0, -1, -1, 2, -1, 0]) }),
+  repeated: Object.freeze({ repeatWeight: .7 }),
+  intervals: Object.freeze({}),
+});
+export const INTERVAL_MIXES = Object.freeze({
+  small: Object.freeze([1, 1, 1, 2, 2, 3]),
+  balanced: Object.freeze([1, 2, 3, 4, 5, 7]),
+  wide: Object.freeze([1, 3, 4, 5, 7, 8]),
+});

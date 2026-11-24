@@ -1,3 +1,4 @@
+import { SEQ } from './sequence-strings.js';
 import { LETTERS } from '../music/notes.js';
 import { renderNotation } from '../music/notation.js';
 import { TEXT } from './strings.js';
@@ -6,10 +7,10 @@ import { rangeDescription } from './config-description.js';
 import { formatAccuracy, formatDuration, formatResponse, formatRemaining } from './format.js';
 
 export function practiceMarkup(config) {
-  return `<section class="practice-view" aria-labelledby="practice-title">
+  return `<section class="practice-view${config.exerciseType === 'sequence' ? ' sequence-practice' : ''}" aria-labelledby="practice-title">
     <div class="practice-heading"><div>
-      <p class="eyebrow">${TEXT.practiceEyebrow}</p>
-      <h1 id="practice-title" tabindex="-1">${TEXT.practiceTitle}</h1>
+      <p class="eyebrow">${config.exerciseType === 'sequence' ? SEQ.eyebrow : TEXT.practiceEyebrow}</p>
+      <h1 id="practice-title" tabindex="-1">${config.exerciseType === 'sequence' ? SEQ.title : TEXT.practiceTitle}</h1>
     </div></div>
     <div class="practice-toolbar">
       <p class="session-progress" id="session-progress" aria-live="off"></p>
@@ -22,11 +23,13 @@ export function practiceMarkup(config) {
       <div class="staff-stage">
         <p class="staff-caption" id="staff-caption"></p>
         <div id="question-notation"></div>
+        ${config.exerciseType === 'sequence' ? '<p class="sequence-progress" id="sequence-progress"></p><p class="sequence-convention">' + SEQ.convention + '</p>' : ''}
         <div class="pause-cover" id="pause-cover" hidden>
           <h2>${TEXT.paused}</h2><p>${TEXT.pauseDescription}</p>
           <button class="button primary" data-action="resume">${TEXT.resume}</button>
         </div>
       </div>
+      <div class="sequence-controls">
       <div class="feedback-area">
         <div class="feedback" id="feedback" role="status" aria-live="polite" aria-atomic="true">
           <p id="feedback-message">${TEXT.instruction}</p>
@@ -37,6 +40,7 @@ export function practiceMarkup(config) {
       <div class="answer-buttons" role="group" aria-label="${TEXT.answerGroup}">
         ${LETTERS.map(letter => `<button class="answer-button" data-answer="${letter}"
           aria-label="${TEXT.answerLabel(letterName(letter, config.naming))}" aria-disabled="true">${letterName(letter, config.naming)}</button>`).join('')}
+      </div>
       </div>
     </div>
     <dl class="metrics practice-metrics">
@@ -115,12 +119,12 @@ export class PracticeView {
     this.updateStatistics(session);
   }
 
-  updateStatistics(session) {
+  updateStatistics(session, concealed = false) {
     const stats = session.statistics;
     const values = {
-      answered: stats.answered, accuracy: formatAccuracy(stats.accuracy),
+      answered: stats.answered, accuracy: concealed ? TEXT.empty : formatAccuracy(stats.accuracy),
       response: formatResponse(stats.averageResponseMs), duration: formatDuration(stats.durationMs),
-      correct: stats.correct, incorrect: stats.incorrect,
+      correct: concealed ? TEXT.empty : stats.correct, incorrect: concealed ? TEXT.empty : stats.incorrect,
     };
     for (const [key, value] of Object.entries(values)) {
       this.root.querySelector(`#stat-${key}`).textContent = value;

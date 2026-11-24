@@ -1,4 +1,4 @@
-import { EXERCISE_CONFIG, NOTE_LIMITS, PRESETS, SESSION_LIMITS } from '../config.js';
+import { EXERCISE_CONFIG, NOTE_LIMITS, PRESETS, SESSION_LIMITS, SEQUENCE_DEFAULTS, SEQUENCE_LENGTHS, SEQUENCE_STRATEGIES, INTERVAL_MIXES } from '../config.js';
 import { naturalNotesBetween } from '../music/notes.js';
 
 export class ConfigurationError extends RangeError {
@@ -15,6 +15,14 @@ export function validateConfiguration(input) {
   if (!['czech', 'international'].includes(input.naming)) throw new ConfigurationError('naming');
   if (!['unlimited', 'timed', 'count'].includes(input.sessionType)) throw new ConfigurationError('session');
   if (!Object.hasOwn(PRESETS, input.presetId) && input.presetId !== 'custom') throw new ConfigurationError('preset');
+  const exerciseType = input.exerciseType ?? 'single-note';
+  if (!['single-note', 'sequence'].includes(exerciseType) || (input.inputMethod ?? 'letter') !== 'letter') throw new ConfigurationError('exercise');
+  let sequence = {};
+  if (exerciseType === 'sequence') {
+    sequence = Object.fromEntries(Object.entries(SEQUENCE_DEFAULTS).map(([key, value]) => [key, input[key] ?? value]));
+    if (!SEQUENCE_LENGTHS.includes(sequence.sequenceLength) || !Object.hasOwn(SEQUENCE_STRATEGIES, sequence.sequenceStrategy) ||
+        !['immediate', 'delayed'].includes(sequence.feedbackMode) || !Object.hasOwn(INTERVAL_MIXES, sequence.intervalMix)) throw new ConfigurationError('sequence');
+  }
   const ranges = {};
   for (const clef of ['treble', 'bass']) {
     const selected = activeClefs(input).includes(clef) ? input.ranges?.[clef] : EXERCISE_CONFIG.ranges[clef];
@@ -43,7 +51,7 @@ export function validateConfiguration(input) {
   return Object.freeze({
     presetId: input.presetId, clef: input.clef, ranges: Object.freeze(ranges),
     naming: input.naming, sessionType: input.sessionType, durationMs, questionCount,
-    exerciseType: 'single-note', inputMethod: 'letter',
+    exerciseType, inputMethod: 'letter', ...sequence,
   });
 }
 

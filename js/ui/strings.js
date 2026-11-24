@@ -1,3 +1,4 @@
+import { SEQ } from './sequence-strings.js';
 // Interactive copy is centralized for future localization.
 // HTML metadata and the no-JavaScript fallback remain static.
 export const TEXT = Object.freeze({
@@ -63,6 +64,7 @@ export const TEXT = Object.freeze({
   remaining: time => `Remaining ${time}`,
   countProgress: (answered, total) => `${answered} / ${total} answered`,
   configurationErrors: {
+    exercise: SEQ.exerciseError, sequence: SEQ.configError,
     clef: 'Choose treble, bass or mixed clefs.',
     naming: 'Choose a supported note naming convention.',
     session: 'Choose a session type.',

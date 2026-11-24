@@ -25,6 +25,7 @@ export function mergeSessionRecords(previous, incoming) {
   if (old.session.status !== 'in-progress') {
     if (next.attempts.some(attempt => !old.attempts.some(item => same(item, attempt))) ||
         next.activity.some(part => !old.activity.some(item => same(item, part))) ||
+        (next.sequences ?? []).some(sequence => !(old.sequences ?? []).some(item => same(item, sequence))) ||
         next.session.status !== old.session.status) throw new DataError('conflict');
     return clone(old);
   }
@@ -43,10 +44,18 @@ export function mergeSessionRecords(previous, incoming) {
     const key = activityKey(part), prior = activity.get(key);
     if (!prior || part.durationMs > prior.durationMs) activity.set(key, part);
   }
+
+  const sequences = new Map((old.sequences ?? []).map(sequence => [sequence.id, sequence]));
+  for (const sequence of next.sequences ?? []) {
+    if (sequences.has(sequence.id) && !same(sequences.get(sequence.id), sequence)) throw new DataError('conflict');
+    sequences.set(sequence.id, sequence);
+  }
+
   return validateSessionRecord({
     ...old, ...next, session: { ...old.session, ...next.session },
     attempts: [...attempts.values()].sort((a, b) => a.ordinal - b.ordinal),
     activity: [...activity.values()],
+    ...(sequences.size ? { sequences: [...sequences.values()] } : {}),
   });
 }
 

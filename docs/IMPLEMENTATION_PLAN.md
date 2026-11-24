@@ -1346,7 +1346,7 @@ Milestone 2: Complete (2026-11-24)
 
 Milestone 3: Complete (2026-11-24)
 
-Milestone 4: Not started
+Milestone 4: Complete (2026-11-24)
 
 Milestone 5: Not started
 
@@ -1358,7 +1358,7 @@ Milestone 8: Not started
 
 
 
-Currently authorized milestone: Milestone 3 only, including the explicitly requested basic mastery classification and historical charts.
+Currently authorized milestone: Milestone 4 only.
 
 
 
@@ -1495,3 +1495,16 @@ mastery/degradation are validated with automated fixtures.
 Milestones 4–8 remain not started. No sequences, virtual piano, adaptive selection,
 backup/restore/reset or offline PWA were implemented. No commits, pushes or
 publication were performed.
+
+### Milestone 4 implementation notes — 2026-11-24
+
+Note Sequences is complete: all requested lengths/strategies, shared notation,
+ordered mobile systems, sequential input, immediate/delayed feedback, review,
+all session types, shortened final sequences, immediate persistent evidence,
+separate sequence contexts/statistics and history/repeat. Existing history and
+preferences are preserved through the additive schema 2 extension.
+
+Validation: 194 automated tests pass, including all 139 previous tests. Essential
+browser checks and precise validation limits are recorded in
+ docs/validation/MILESTONE_4.md. No later milestone was implemented; no commit,
+push or publication was performed.

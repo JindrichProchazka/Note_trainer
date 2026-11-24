@@ -1,7 +1,7 @@
 # NoteTrainer
 
 A lightweight piano note-reading trainer built with HTML, CSS and vanilla JavaScript.
-**Milestones 1, 2 and 3 are implemented.** No production build, backend, account,
+**Milestones 1–4 are implemented.** No production build, backend, account,
 external font or runtime dependency is required.
 
 ## Launch locally
@@ -26,6 +26,27 @@ Open [the alternate address](http://127.0.0.1:4173/Note_trainer/).
 On other shells, use `npm start` and `npm test` as usual.
 Serve the files over HTTP: opening `index.html` through `file://` does not support ES modules.
 
+## Note Sequences (Milestone 4)
+
+Choose **Note Sequences** on Home or in practice configuration. Lengths are
+3, 5 (default), 8, 12 or 16 notes. Random selects independently; Stepwise favors
+adjacent pitches; Melodic follows short rising/falling/repeated contours;
+Repeated notes deliberately repeat; Mixed intervals offers small/balanced/wide
+variety. Narrow ranges reflect movements safely at their boundaries.
+
+Each sequence uses one clef, including mixed-clef sessions. Ordered staff systems
+wrap on mobile, with active-note highlighting, submitted letters and persistent
+answer controls. Quarter notes indicate pitch order; rhythm is not assessed.
+Immediate feedback reveals each result. Delayed feedback reveals correctness only
+at sequence review; choose Next sequence when ready. Review pauses the clock.
+Distinct key presses allow repeated letters; held keys and mouse double-clicks
+are guarded. Fixed counts count individual notes and shorten the final sequence.
+
+Every answer is saved immediately, including partial/interrupted sequences.
+Statistics separates exercise contexts and shows completed/partial sequences.
+Later-note response times benefit from reading ahead and should be compared
+within equivalent exercise configurations. Recent configurations can be repeated.
+See [M4 validation and manual checks](docs/validation/MILESTONE_4.md).
 ## Practice
 
 **Quick start** uses the selected preset and your saved default session type and
@@ -168,7 +189,7 @@ cd C:\Users\jindr\Documents\Note_trainer\Note_trainer
 npm.cmd test
 ```
 
-**139 tests pass**, including all 95 Milestone 1/2 tests. Node's built-in runner
+**194 tests pass**, including all 95 Milestone 1/2 tests. Node's built-in runner
 covers music/ledger geometry, generation, naming, session timing and limits,
 settings, schemas/migrations, immediate evidence/deduplication, interruption,
 storage failure/retry, context separation, filtered/weighted metrics, dates,
@@ -227,8 +248,8 @@ All production resource URLs and imports are relative. Navigation uses fragments
 so the repository root works under **/Note_trainer/** without a build or URL rewrite.
 The local server deliberately provides that project subpath for testing.
 
-Milestone 3 changes are local and have not been committed, pushed or published.
-Subsequent sequence, piano and adaptive modes remain deferred.
+Milestone 4 changes are local and have not been committed, pushed or published.
+Piano and adaptive modes remain deferred.
 
 PWA installation, a manifest, service worker, and offline caching remain scheduled
 for Milestone 7. Static files must currently be available when opening/reloading.

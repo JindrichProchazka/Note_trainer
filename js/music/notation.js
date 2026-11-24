@@ -43,10 +43,10 @@ export function notationViewport(layout) {
   const maxY = Math.max(STAFF.height, layout.y + 22);
   return { minY, height: maxY - minY };
 }
-function staffMarkup() {
+function staffMarkup(right = STAFF.right) {
   return `<g class="staff-lines" fill="none" stroke="currentColor" stroke-width="1.4">${Array.from({ length: 5 }, (_, index) => {
     const lineY = STAFF.bottomY - index * STAFF.lineSpacing;
-    return `<line x1="${STAFF.left}" x2="${STAFF.right}" y1="${lineY}" y2="${lineY}"/>`;
+    return `<line x1="${STAFF.left}" x2="${right}" y1="${lineY}" y2="${lineY}"/>`;
   }).join('')}</g>`;
 }
 /** Both practice and performance views use this exact note and ledger geometry. */
@@ -90,6 +90,29 @@ export function renderPerformanceStaff(entries, label, clef = 'treble') {
           <circle cx="${x}" cy="${bottom + 12}" r="12" fill="var(--surface)" stroke="currentColor" stroke-width="2"/>
           <text x="${x}" y="${bottom + 17}" text-anchor="middle" fill="currentColor" font-size="15" font-weight="700">${escapeText(entry.marker)}</text>
         </g>`;
+    }).join('')}
+  </svg>`;
+}
+
+/** Consecutive quarter notes share the exact practice/learning note geometry. */
+export function renderSequenceSystem(entries, label, clef = 'treble') {
+  if (!entries.length || entries.length > 6) throw new RangeError('Use one to six notes per system');
+  const width = Math.max(400, 160 + entries.length * 80);
+  const viewports = entries.map(entry => notationViewport(notationLayout(entry.note, clef)));
+  const minY = Math.min(...viewports.map(viewport => viewport.minY));
+  const bottom = Math.max(...viewports.map(viewport => viewport.minY + viewport.height));
+  return `<svg class="notation sequence-notation" viewBox="0 ${minY} ${width} ${bottom + 62 - minY}"
+    data-clef="${clef}" role="img" aria-label="${escapeText(label)}" xmlns="http://www.w3.org/2000/svg">
+    ${staffMarkup(width - 32)}${CLEFS[clef].svg}
+    ${entries.map((entry, index) => {
+      const x = 160 + index * 80;
+      return `<g class="sequence-note" data-item-index="${entry.index}" data-result="${escapeText(entry.result)}"${entry.active ? ' data-active="true"' : ''}>
+        ${entry.active ? `<rect class="active-note-ring" x="${x - 31}" y="${minY + 12}" width="62" height="${bottom - minY - 8}" rx="10"/>` : ''}
+        ${noteMarkup(entry.note, clef, x)}
+        <text class="note-number" x="${x}" y="${bottom + 13}" text-anchor="middle">${entry.index + 1}</text>
+        <text class="submitted-answer" x="${x}" y="${bottom + 38}" text-anchor="middle">${escapeText(entry.answer ?? '·')}</text>
+        ${entry.correction ? `<text class="note-correction" x="${x}" y="${bottom + 57}" text-anchor="middle">${escapeText(entry.correction)}</text>` : ''}
+      </g>`;
     }).join('')}
   </svg>`;
 }

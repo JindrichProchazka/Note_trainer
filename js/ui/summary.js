@@ -1,7 +1,9 @@
+import { SEQ } from './sequence-strings.js';
+import { sequenceResultsMarkup } from './sequence-results.js';
 import { TEXT } from './strings.js';
 import { STATS } from './statistics-strings.js';
 import { formatAccuracy, formatDuration, formatResponse } from './format.js';
-import { configurationDescription, sessionDescription } from './config-description.js';
+import { configurationDescription, sessionDescription, exerciseDescription } from './config-description.js';
 import { writtenNoteName } from './note-names.js';
 import { canRepeat } from './session-history.js';
 import { escapeHtml as h } from './html.js';
@@ -19,6 +21,7 @@ export function summaryMarkup(session, { historical = false, naming = session.co
       <p class="eyebrow" id="summary-config-title">${TEXT.configuration}</p>
       <h2>${TEXT.presets[session.config.presetId] ?? TEXT.custom}</h2>
       <p>${configurationDescription(configuration)}</p>
+      <p>${exerciseDescription(configuration)}</p>
       <p class="muted">${sessionDescription(session.config)} · ${TEXT.namingShort[session.config.naming]}</p>
     </section>
     <dl class="metrics summary-metrics">
@@ -28,6 +31,7 @@ export function summaryMarkup(session, { historical = false, naming = session.co
       ${metric(TEXT.medianCorrect, formatResponse(stats.medianCorrectResponseMs))}
       ${metric(TEXT.correctPerMinute, stats.correctNotesPerMinute.toFixed(1))}
     </dl>
+    ${session.config.exerciseType === 'sequence' ? sequenceResultsMarkup(stats, naming) : ''}
     ${stats.answered && !stats.correct ? `<p class="session-note">${TEXT.noCorrectResponses}</p>` : ''}
     <section class="card missed-card" aria-labelledby="missed-title">
       <h2 id="missed-title">${TEXT.missed}</h2>

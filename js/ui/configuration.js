@@ -1,4 +1,5 @@
-import { PRESETS, NOTE_LIMITS, TIMED_PRESETS, COUNT_PRESETS } from '../config.js';
+import { SEQ } from './sequence-strings.js';
+import { PRESETS, NOTE_LIMITS, TIMED_PRESETS, COUNT_PRESETS, SEQUENCE_DEFAULTS, SEQUENCE_LENGTHS } from '../config.js';
 import { naturalNotesBetween } from '../music/notes.js';
 import { noteName } from './note-names.js';
 import { TEXT } from './strings.js';
@@ -11,6 +12,7 @@ export const presetOptions = (selected, custom = true) => selectOptions(Object.f
 ]), selected);
 
 export function configurationMarkup(draft) {
+  const sequence = draft.exerciseType === 'sequence';
   const custom = draft.presetId === 'custom';
   const timed = draft.sessionType === 'timed';
   const counted = draft.sessionType === 'count';
@@ -27,6 +29,20 @@ export function configurationMarkup(draft) {
     <h1 id="configuration-title" tabindex="-1">${TEXT.configureTitle}</h1>
     <p class="lead">${TEXT.configureDescription}</p>
     <form id="practice-form" class="card form-card" novalidate>
+      <label class="form-field" for="practice-exercise">${SEQ.mode}
+        <select id="practice-exercise">${selectOptions(SEQ.modes, draft.exerciseType ?? 'single-note')}</select></label>
+      <div class="sequence-options"${sequence ? '' : ' hidden'}>
+        <div class="form-grid">
+          <label class="form-field" for="sequence-length">${SEQ.length}
+            <select id="sequence-length">${selectOptions(Object.fromEntries(SEQUENCE_LENGTHS.map(length => [length, SEQ.notes(length)])), draft.sequenceLength ?? SEQUENCE_DEFAULTS.sequenceLength)}</select></label>
+          <label class="form-field" for="sequence-strategy">${SEQ.strategy}
+            <select id="sequence-strategy">${selectOptions(SEQ.strategies, draft.sequenceStrategy ?? SEQUENCE_DEFAULTS.sequenceStrategy)}</select></label>
+        </div>
+        <label class="form-field" for="sequence-feedback">${SEQ.feedback}
+          <select id="sequence-feedback">${selectOptions(SEQ.feedbackModes, draft.feedbackMode ?? SEQUENCE_DEFAULTS.feedbackMode)}</select></label>
+        <label class="form-field" for="sequence-intervals"${draft.sequenceStrategy === 'intervals' ? '' : ' hidden'}>${SEQ.intervalMix}
+          <select id="sequence-intervals">${selectOptions(SEQ.intervalMixes, draft.intervalMix ?? SEQUENCE_DEFAULTS.intervalMix)}</select></label>
+      </div>
       <label class="form-field" for="practice-preset">${TEXT.preset}
         <select id="practice-preset" name="preset">${presetOptions(draft.presetId)}</select>
       </label>
@@ -61,6 +77,7 @@ export function configurationMarkup(draft) {
           <span class="form-hint">${TEXT.durationHint}</span></label>
       </div>
       <div class="session-options"${counted ? '' : ' hidden'}>
+        ${sequence ? `<p class="form-hint sequence-count-hint">${SEQ.countHint}</p>` : ''}
         <label class="form-field" for="count-preset">${TEXT.count}
           <select id="count-preset">${selectOptions(Object.fromEntries([
             ...COUNT_PRESETS.map(count => [count, TEXT.questions(count)]), ['custom', TEXT.custom],
@@ -80,7 +97,9 @@ export function configurationMarkup(draft) {
 export function readConfiguration(form, previous) {
   const value = id => form.querySelector('#' + id).value;
   return {
-    ...previous, presetId: value('practice-preset'), clef: value('clef-choice'),
+    ...previous, exerciseType: value('practice-exercise'), sequenceLength: Number(value('sequence-length')),
+    sequenceStrategy: value('sequence-strategy'), feedbackMode: value('sequence-feedback'), intervalMix: value('sequence-intervals'),
+    presetId: value('practice-preset'), clef: value('clef-choice'),
     customDuration: value('duration-preset') === 'custom', customCount: value('count-preset') === 'custom',
     naming: value('practice-naming'), sessionType: value('session-type'),
     ranges: Object.fromEntries(['treble', 'bass'].map(clef => [clef,
