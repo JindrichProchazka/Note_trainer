@@ -1,3 +1,4 @@
+import { pairResults } from '../session/pair-statistics.js';
 import { sequenceResults } from '../session/sequence-statistics.js';
 import { parseWrittenNote } from '../music/notes.js';
 import { median, learningState, MASTERY_RULES } from './mastery.js';
@@ -59,7 +60,7 @@ function hasClef(record, clef) {
   if (clef === 'all') return true;
   const evidence = [...record.attempts, ...record.activity];
   return evidence.length ? evidence.some(item => item.clef === clef)
-    : record.session.config.clef === clef || record.session.config.clef === 'mixed';
+    : record.session.config.clef === clef || ['mixed','grand'].includes(record.session.config.clef);
 }
 
 /** All totals are derived from individual attempts and active-time evidence. */
@@ -100,12 +101,15 @@ export function buildStatistics(data, selected = {}, now = Date.now()) {
   }
   const sequences = eligible.flatMap(record => sequenceResults(record.sequences, record.attempts)).filter(sequence =>
     matches(sequence.clef, filters.clef) && sequence.lastAttempt && withinDays(sequence.lastAttempt.day, bounds));
+  const pairs=eligible.flatMap(record=>pairResults(record.pairs,record.attempts)).filter(pair=>
+    pair.lastAttempt&&withinDays(pair.lastAttempt.day,bounds)&&pair.answers.some(a=>matches(a.clef,filters.clef)));
   return {
-    sequences,
+    pairs, sequences,
     filters, bounds, attempts, activity, daily, notes, history,
     configurations: [...includedConfigurations.values()],
     overview: {
       ...metricSummary(attempts, sum(activity.map(part => part.durationMs))),
+      completedPairs:pairs.filter(p=>p.complete).length,partialPairs:pairs.filter(p=>p.partial).length,
       completedSequences: sequences.filter(sequence => sequence.complete).length,
       partialSequences: sequences.filter(sequence => sequence.partial).length,
       completedSessions: history.filter(record => record.session.status === 'completed').length,

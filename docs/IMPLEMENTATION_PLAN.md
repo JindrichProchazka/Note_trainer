@@ -1196,7 +1196,7 @@ Not authorized for initial implementation:
 
 \- Rhythm exercises.
 
-\- Grand staff.
+\- Grand Staff sequences and piano input (paired letter practice is implemented in v1.1).
 
 \- MIDI hardware integration.
 
@@ -1358,7 +1358,7 @@ Milestone 8: Complete (2026-11-24)
 
 
 
-Currently authorized milestones: Milestones 7 and 8 (explicit user authorization).
+Current authorized scope: focused v1.1 usability update, including Grand Staff (explicit user authorization).
 
 
 
@@ -1530,3 +1530,21 @@ replace/reset commits and storage failures use automated fixtures. Physical
 iPhone/Android installation, Safari/Firefox and published hosting remain manual
 verification; README contains instructions. No required implementation remains.
 No commit, push, tag or publication was performed.
+
+### v1.1 usability update — 2026-11-25
+
+Complete: simplified Basic/Extended/Random presets, weighted ledger emphasis,
+non-destructive preference mapping and exact historical configuration support;
+Grand Staff pairs with independent letter answers, both feedback modes, pair
+limits, shared readiness clocks and separate persistent/adaptive/mastery evidence;
+stable responsive piano/octave pages, optional reference markers, paged sequences,
+compact portrait/landscape toolbar and safe-area handling. Version v1.1.0.
+
+Validation: 253/253 tests passed in the complete suite; 90 JavaScript syntax
+checks passed. Essential Chromium checks used all five requested phone viewports,
+with notation/piano and both Grand Staff answer rows visible without scrolling.
+Independent/keyboard answers, delayed partial-pair persistence/statistics, long
+sequence pages, octave/rotation stability and PWA updates were checked.
+Physical iPhone touch/notch/standalone verification remains manual.
+Grand Staff piano input and Grand Staff sequences are intentionally unsupported.
+No accidentals/chords/rhythm/MusicXML/MIDI hardware, commit or push.

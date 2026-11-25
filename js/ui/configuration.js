@@ -1,7 +1,9 @@
+import { GRAND,V11 } from './usability-strings.js';
 import { LEARN } from './learning-strings.js';
 import { PIANO } from './piano-strings.js';
 import { SEQ } from './sequence-strings.js';
 import { PRESETS, NOTE_LIMITS, TIMED_PRESETS, COUNT_PRESETS, SEQUENCE_DEFAULTS, SEQUENCE_LENGTHS } from '../config.js';
+import { activeClefs } from '../exercises/configuration.js';
 import { naturalNotesBetween } from '../music/notes.js';
 import { noteName } from './note-names.js';
 import { TEXT } from './strings.js';
@@ -14,7 +16,7 @@ export const presetOptions = (selected, custom = true) => selectOptions(Object.f
 ]), selected);
 
 export function configurationMarkup(draft) {
-  const sequence = draft.exerciseType === 'sequence';
+  const sequence = draft.exerciseType === 'sequence',grand=draft.exerciseType==='grand-staff',random=draft.presetVersion===2&&draft.presetId.endsWith('-random');
   const custom = draft.presetId === 'custom';
   const timed = draft.sessionType === 'timed';
   const counted = draft.sessionType === 'count';
@@ -33,26 +35,27 @@ export function configurationMarkup(draft) {
     <form id="practice-form" class="card form-card" novalidate>
       <label class="form-field" for="practice-exercise">${SEQ.mode}
         <select id="practice-exercise">${selectOptions(SEQ.modes, draft.exerciseType ?? 'single-note')}</select></label>
-      <label class="form-field" for="practice-input">${PIANO.input}<select id="practice-input">${selectOptions(PIANO.inputs,draft.inputMethod ?? 'letter')}</select></label>
+      <label class="form-field" for="practice-input">${PIANO.input}<select id="practice-input"${grand?' disabled':''}>${selectOptions(PIANO.inputs,draft.inputMethod ?? 'letter')}</select></label>
       <div${draft.inputMethod === 'piano' ? '' : ' hidden'}>
         <div class="form-grid">
-          <label class="form-field" for="keyboard-low">${PIANO.low}<select id="keyboard-low">${noteOptions(draft.keyboardMin ?? 36)}</select></label>
-          <label class="form-field" for="keyboard-high">${PIANO.high}<select id="keyboard-high">${noteOptions(draft.keyboardMax ?? 84)}</select></label>
+          <label class="form-field" for="keyboard-low">${PIANO.low}<select id="keyboard-low">${noteOptions(draft.keyboardMin ?? Math.min(...activeClefs(draft).map(c=>draft.ranges[c].minMidi)))}</select></label>
+          <label class="form-field" for="keyboard-high">${PIANO.high}<select id="keyboard-high">${noteOptions(draft.keyboardMax ?? Math.max(...activeClefs(draft).map(c=>draft.ranges[c].maxMidi)))}</select></label>
         </div>
         <label class="form-field" for="piano-labels">${PIANO.labels}<select id="piano-labels">${selectOptions(PIANO.labelOptions,draft.noteLabels ? 'on' : 'off')}</select></label>
       </div>
-      <label class="form-field" for="selection-mode">${LEARN.selection}<select id="selection-mode">${selectOptions(LEARN.modes,draft.selectionMode ?? 'uniform')}</select></label>
-      <p class="form-hint" style="margin-bottom:16px">${LEARN.hint}</p>
-      <div class="sequence-options"${sequence ? '' : ' hidden'}>
+<label class="form-field" for="octave-markers"${draft.inputMethod==='piano'?'':' hidden'}>${V11.marker}<select id="octave-markers">${selectOptions(PIANO.labelOptions,draft.octaveMarkers?'on':'off')}</select></label>
+      <label class="form-field" for="selection-mode">${LEARN.selection}<select id="selection-mode"${random?' disabled':''}>${selectOptions(LEARN.modes,draft.selectionMode ?? 'uniform')}</select></label>
+      <p class="form-hint" style="margin-bottom:16px">${random?V11.randomHint:LEARN.hint}</p>
+      <div class="sequence-options"${sequence||grand ? '' : ' hidden'}>
         <div class="form-grid">
-          <label class="form-field" for="sequence-length">${SEQ.length}
+          <label class="form-field" for="sequence-length"${sequence?'':' hidden'}>${SEQ.length}
             <select id="sequence-length">${selectOptions(Object.fromEntries(SEQUENCE_LENGTHS.map(length => [length, SEQ.notes(length)])), draft.sequenceLength ?? SEQUENCE_DEFAULTS.sequenceLength)}</select></label>
-          <label class="form-field" for="sequence-strategy">${SEQ.strategy}
-            <select id="sequence-strategy">${selectOptions(SEQ.strategies, draft.sequenceStrategy ?? SEQUENCE_DEFAULTS.sequenceStrategy)}</select></label>
+          <label class="form-field" for="sequence-strategy"${sequence?'':' hidden'}>${SEQ.strategy}
+            <select id="sequence-strategy"${random?' disabled':''}>${selectOptions(SEQ.strategies, draft.sequenceStrategy ?? SEQUENCE_DEFAULTS.sequenceStrategy)}</select></label>
         </div>
         <label class="form-field" for="sequence-feedback">${SEQ.feedback}
           <select id="sequence-feedback">${selectOptions(SEQ.feedbackModes, draft.feedbackMode ?? SEQUENCE_DEFAULTS.feedbackMode)}</select></label>
-        <label class="form-field" for="sequence-intervals"${draft.sequenceStrategy === 'intervals' ? '' : ' hidden'}>${SEQ.intervalMix}
+        <label class="form-field" for="sequence-intervals"${sequence && draft.sequenceStrategy === 'intervals' ? '' : ' hidden'}>${SEQ.intervalMix}
           <select id="sequence-intervals">${selectOptions(SEQ.intervalMixes, draft.intervalMix ?? SEQUENCE_DEFAULTS.intervalMix)}</select></label>
       </div>
       <label class="form-field" for="practice-preset">${TEXT.preset}
@@ -61,10 +64,10 @@ export function configurationMarkup(draft) {
       <p class="range-description" id="range-preview">${description}</p>
       <div class="custom-ranges"${custom ? '' : ' hidden'}>
         <label class="form-field" for="clef-choice">${TEXT.clefChoice}
-          <select id="clef-choice">${selectOptions(TEXT.clefs, draft.clef)}</select>
+          <select id="clef-choice">${selectOptions(grand?{grand:TEXT.clefs.grand}:Object.fromEntries(Object.entries(TEXT.clefs).filter(([id])=>id!=='grand')), draft.clef)}</select>
         </label>
         <p class="form-hint">${TEXT.rangeHint}</p>
-        ${['treble', 'bass'].map(clef => `<fieldset class="range-fields"${draft.clef === clef || draft.clef === 'mixed' ? '' : ' hidden'}>
+        ${['treble', 'bass'].map(clef => `<fieldset class="range-fields"${draft.clef === clef || ['mixed','grand'].includes(draft.clef) ? '' : ' hidden'}>
           <legend>${TEXT.clefs[clef]}</legend>
           <div class="form-grid">
             <label class="form-field" for="${clef}-low">${TEXT.lowNote}
@@ -89,12 +92,12 @@ export function configurationMarkup(draft) {
           <span class="form-hint">${TEXT.durationHint}</span></label>
       </div>
       <div class="session-options"${counted ? '' : ' hidden'}>
-        ${sequence ? `<p class="form-hint sequence-count-hint">${SEQ.countHint}</p>` : ''}
-        <label class="form-field" for="count-preset">${TEXT.count}
+        ${sequence||grand ? `<p class="form-hint sequence-count-hint">${grand?GRAND.countHint:SEQ.countHint}</p>` : ''}
+        <label class="form-field" for="count-preset">${grand?GRAND.count:TEXT.count}
           <select id="count-preset">${selectOptions(Object.fromEntries([
-            ...COUNT_PRESETS.map(count => [count, TEXT.questions(count)]), ['custom', TEXT.custom],
+            ...COUNT_PRESETS.map(count => [count, grand?GRAND.pairs(count):TEXT.questions(count)]), ['custom', TEXT.custom],
           ]), customCount ? 'custom' : draft.questionCount)}</select></label>
-        <label class="form-field" for="count-custom"${customCount ? '' : ' hidden'}>${TEXT.customCount}
+        <label class="form-field" for="count-custom"${customCount ? '' : ' hidden'}>${grand?GRAND.customCount:TEXT.customCount}
           <input id="count-custom" type="number" inputmode="numeric" min="1" max="1000" step="1"
             value="${Number.isFinite(draft.questionCount) ? draft.questionCount : ''}">
           <span class="form-hint">${TEXT.countHint}</span></label>
@@ -109,7 +112,7 @@ export function configurationMarkup(draft) {
 export function readConfiguration(form, previous) {
   const value = id => form.querySelector('#' + id).value;
   return {
-    ...previous, selectionMode:value('selection-mode'), inputMethod:value('practice-input'), keyboardMin:Number(value('keyboard-low')), keyboardMax:Number(value('keyboard-high')), noteLabels:value('piano-labels')==='on', exerciseType: value('practice-exercise'), sequenceLength: Number(value('sequence-length')),
+    ...previous, selectionMode:value('selection-mode'), inputMethod:value('practice-input'), keyboardMin:Number(value('keyboard-low')), keyboardMax:Number(value('keyboard-high')), noteLabels:value('piano-labels')==='on', octaveMarkers:value('octave-markers')==='on', exerciseType: value('practice-exercise'), sequenceLength: Number(value('sequence-length')),
     sequenceStrategy: value('sequence-strategy'), feedbackMode: value('sequence-feedback'), intervalMix: value('sequence-intervals'),
     presetId: value('practice-preset'), clef: value('clef-choice'),
     customDuration: value('duration-preset') === 'custom', customCount: value('count-preset') === 'custom',

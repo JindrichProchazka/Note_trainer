@@ -32,8 +32,9 @@ export function validateStoredConfiguration(input) {
   if (!isObject(input) || !isIdentifier(input.exerciseType) || !isIdentifier(input.inputMethod)) fail('Invalid exercise context');
   // Reuse current range/session validation, retaining future exercise/input identifiers.
   let config;
-  try { config = validateConfiguration({ ...input, exerciseType: input.exerciseType === 'sequence' ? 'sequence' : 'single-note', inputMethod: input.inputMethod === 'piano' ? 'piano' : 'letter' }); } catch { fail('Invalid session configuration'); }
-  return { ...input, ...config, exerciseType: input.exerciseType, inputMethod: input.inputMethod };
+  try { config = validateConfiguration({ ...input, exerciseType: ['sequence','grand-staff'].includes(input.exerciseType) ? input.exerciseType : 'single-note', inputMethod: input.inputMethod === 'piano' ? 'piano' : 'letter' }); } catch { fail('Invalid session configuration'); }
+  if(input.presetVersion===2&&input.noteDistribution!==config.noteDistribution)fail('Invalid preset distribution');
+  return { ...input }; // Validation must never rewrite an immutable historical configuration.
 }
 
 export function validateAttempt(attempt) {
@@ -97,10 +98,11 @@ export function validateSessionRecord(record) {
   }
   const totalTime = record.activity.reduce((total, part) => total + part.durationMs, 0);
   if (!Number.isFinite(totalTime) || (config.sessionType === 'timed' && totalTime > config.durationMs + .01) ||
-      (config.sessionType === 'count' && record.attempts.length > config.questionCount) ||
+      (config.sessionType === 'count' && record.attempts.length > config.questionCount * (config.exerciseType==='grand-staff'?2:1)) ||
       (session.completionReason === 'count' &&
-        (config.sessionType !== 'count' || record.attempts.length !== config.questionCount))) fail('Inconsistent session limit');
+        (config.sessionType !== 'count' || record.attempts.length !== config.questionCount * (config.exerciseType==='grand-staff'?2:1)))) fail('Inconsistent session limit');
   validateSequences(record, config);
+  validatePairs(record, config);
   return { ...record, session: { ...session, config } };
 }
 
@@ -132,4 +134,28 @@ function validateSequences(record, config) {
     ids.add(sequence.id); ordinals.add(sequence.ordinal); previousAnswers.set(sequence.id, answers.length);
   }
   if (record.attempts.some(attempt => !ids.has(attempt.sequenceId))) fail('Missing parent sequence');
+}
+
+function validatePairs(record,config){
+  if(config.exerciseType!=='grand-staff')return;
+  if(record.pairEvidenceVersion!==1||!Array.isArray(record.pairs))fail('Missing pair definitions');
+  const ids=new Set();
+  for(const [index,pair] of record.pairs.entries()){
+    if(!isObject(pair)||!validId(pair.id)||ids.has(pair.id)||pair.ordinal!==index+1||
+      !validTimestamp(pair.createdAt)||!isObject(pair.notes))fail('Invalid pair');
+    for(const clef of ['treble','bass']){
+      let note;try{note=parseWrittenNote(pair.notes[clef]);}catch{fail('Invalid pair pitch');}
+      if(note.accidental!==0||note.midi<config.ranges[clef].minMidi||note.midi>config.ranges[clef].maxMidi)fail('Pair pitch outside range');
+    }
+    const answers=record.attempts.filter(a=>a.pairId===pair.id),clefs=new Set();
+    for(const answer of answers){
+      if(clefs.has(answer.clef)||answer.questionId!==pair.id||answer.writtenNote!==pair.notes[answer.clef]||
+        answer.itemIndex!==(answer.clef==='treble'?0:1))fail('Mismatched pair answer');
+      clefs.add(answer.clef);
+    }
+    if(index<record.pairs.length-1&&answers.length!==2)fail('Unfinished prior pair');
+    if(config.sessionType==='count'&&index>=config.questionCount)fail('Too many pairs');
+    ids.add(pair.id);
+  }
+  if(record.attempts.some(a=>!ids.has(a.pairId)))fail('Missing parent pair');
 }

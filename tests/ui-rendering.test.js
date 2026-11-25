@@ -20,7 +20,7 @@ test('all preset screen templates render without missing interface copy or inval
 });
 test('summary presents Czech H names, correct-only median, and the actual clef',()=>{
   const config=configurationForPreset('treble-basic');
-  const session=new PracticeSession({config,random:()=>.87,clock:()=>500});
+  const session=new PracticeSession({config,random:()=>.59,clock:()=>500});
   session.start();session.markReady();
   assert.equal(session.question.note.letter,'B');
   session.submit('C');session.finish();

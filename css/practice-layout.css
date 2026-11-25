@@ -1,0 +1,72 @@
+/* v1.1: stable keyboard pages and a compact viewport layout, including standalone safe areas. */
+.app-header { padding-top: env(safe-area-inset-top); padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
+.practice-home { display:none; }
+.piano-scroll { overflow:hidden; padding:2px 0 0; }
+.piano-keys { margin-inline:auto; height:var(--key-height,140px); }
+.white-key { width:var(--white-width,48px); height:var(--key-height,140px); }
+.black-key { width:var(--black-width,32px); height:calc(var(--key-height,140px)*.63); }
+.piano-page-range { text-align:center; flex:1; font-variant-numeric:tabular-nums; }
+.piano-toolbar > span { margin-right:0; }
+.piano-toolbar .button { min-height:44px; min-width:44px; }
+.octave-marker { color:#555; font-size:9px !important; line-height:1.1; padding-inline:1px; }
+.sequence-page-toolbar { display:flex; align-items:center; justify-content:center; gap:8px; margin:4px 0; font-size:.7rem; }
+.sequence-page-toolbar .button { min-height:36px; padding:4px 10px; }
+.grand-staff[data-result="correct"] .note { color:var(--good); }
+.grand-staff[data-result="incorrect"] .note { color:var(--bad); }
+.grand-answers { display:grid; gap:6px; }
+.grand-hand { border:0; border-radius:6px; background:transparent; color:var(--muted); padding:2px 6px; font:inherit; font-size:.74rem; min-height:28px; }
+.grand-hand[aria-pressed="true"] { color:var(--accent); background:var(--accent-soft); }
+.grand-answer-row .answer-buttons { grid-template-columns:repeat(7,minmax(0,1fr)); gap:4px; max-width:none; }
+.grand-answer-row .answer-button { min-height:44px; font-size:1.1rem; }
+.grand-answer-feedback { min-height:18px; font-size:.7rem; line-height:1.2; margin-top:2px; }
+body[data-practice="piano"],body[data-practice="grand-staff"] { height:100vh; height:100svh; height:100dvh; overflow:hidden; }
+body[data-practice] #app { height:100%; display:flex; flex-direction:column; }
+body[data-practice] .app-header,body[data-practice] .app-footer,body[data-practice] .release-banner { display:none; }
+body[data-practice] #main {
+  min-height:0; flex:1; width:100%; max-width:100%; margin:0;
+  padding:max(4px,env(safe-area-inset-top)) max(8px,env(safe-area-inset-right)) max(4px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left));
+}
+body[data-practice] .practice-view { height:100%; max-width:1000px; display:flex; flex-direction:column; min-height:0; }
+body[data-practice] .practice-heading { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
+body[data-practice] .practice-toolbar { margin:0 0 4px; gap:4px; flex-shrink:0; min-height:44px; }
+body[data-practice] .practice-home { display:inline-flex; }
+body[data-practice] .practice-actions { gap:4px; }
+body[data-practice] .practice-actions .button { min-height:44px; padding:6px 10px; font-size:.78rem; }
+body[data-practice] .session-progress { font-size:.72rem; }
+body[data-practice] .practice-card { flex:1; min-height:0; display:grid; grid-template-rows:minmax(0,1fr) auto; padding:6px; gap:4px; }
+body[data-practice] .staff-stage { min-height:0; display:flex; flex-direction:column; }
+body[data-practice] #question-notation { flex:1; min-height:0; display:flex; align-items:center; justify-content:center; }
+body[data-practice] #question-notation > .notation { height:100%; max-height:100%; width:100%; }
+body[data-practice] .staff-caption { margin:0; font-size:.65rem; }
+body[data-practice] .practice-metrics,body[data-practice] .attempt-counts,body[data-practice] .sequence-convention { display:none; }
+body[data-practice] .sequence-controls { position:static; padding:0; border:0; min-width:0; }
+body[data-practice] .feedback-area { min-height:38px; padding:2px 0; gap:6px; }
+body[data-practice] .feedback > p:first-child { font-size:.8rem; line-height:1.25; }
+body[data-practice] .feedback > p + p { font-size:.65rem; margin-top:2px; line-height:1.2; }
+body[data-practice="piano"] .piano-hint { font-size:.65rem; margin:2px 0; line-height:1.25; }
+body[data-practice="piano"] .sequence-progress { margin:0; font-size:.7rem; }
+body[data-practice="grand-staff"] #staff-caption { display:none; }
+body[data-practice="grand-staff"] #feedback-detail { display:none; }
+body[data-practice="grand-staff"] .feedback-area { min-height:28px; }
+body[data-practice="grand-staff"] .grand-notation { max-height:360px !important; }
+@media (orientation:landscape) and (max-height:600px) {
+  body[data-practice] .practice-card { grid-template-columns:minmax(200px,.8fr) minmax(0,1.2fr); grid-template-rows:minmax(0,1fr); gap:10px; align-items:center; }
+  body[data-practice] .staff-stage { height:100%; }
+  body[data-practice] .sequence-controls { max-height:100%; }
+  body[data-practice="piano"] { --key-height:clamp(84px,32dvh,138px); }
+  body[data-practice="piano"] .piano-hint { display:none; }
+  body[data-practice] .feedback-area { min-height:36px; }
+  body[data-practice] .grand-answer-row .answer-button { min-height:44px; }
+}
+@media (max-width:360px) {
+  body[data-practice] #main { padding-left:max(4px,env(safe-area-inset-left)); padding-right:max(4px,env(safe-area-inset-right)); }
+  body[data-practice="piano"] { --key-height:112px; }
+  body[data-practice] .practice-toolbar { flex-wrap:wrap; }
+  body[data-practice] .practice-actions { margin-left:auto; }
+}
+
+/* Keep ordinary navigation and reading screens outside standalone cutouts too. */
+#main { padding-left:max(var(--page-gutter,20px),env(safe-area-inset-left)); padding-right:max(var(--page-gutter,20px),env(safe-area-inset-right)); }
+.app-footer { padding-left:max(var(--page-gutter,20px),env(safe-area-inset-left)); padding-right:max(var(--page-gutter,20px),env(safe-area-inset-right)); }
+@media (min-width:640px) { :root { --page-gutter:32px; } }
+@media (max-width:360px) { :root { --page-gutter:14px; } }

@@ -1,3 +1,6 @@
+import { GrandSession } from './session/grand-session.js';
+import { GrandPracticeView,grandPracticeMarkup } from './ui/grand-practice.js';
+import { V11,GRAND } from './ui/usability-strings.js';
 import { DATA } from './ui/data-strings.js';
 import { createManagedStorage, DATA_HEAD } from './data/managed-storage.js';
 import { createDataManager } from './ui/data-management.js';
@@ -47,7 +50,7 @@ const state = {
   pianoOptions: recentConfiguration?.inputMethod === 'piano' ? recentConfiguration : {},
   quickExercise: canRepeat(recentConfiguration ?? {}) ? recentConfiguration.exerciseType : 'single-note',
   sequenceOptions: { ...SEQUENCE_DEFAULTS, ...(recentConfiguration?.exerciseType === 'sequence' ? recentConfiguration : {}) },
-  quickPreset: loaded.settings.defaultPreset, draft: initialConfig, pendingConfig: null,
+  quickPreset: recentConfiguration?.exerciseType==='grand-staff'?(PRESETS[recentConfiguration.presetId]?.clef==='grand'?recentConfiguration.presetId:'grand-basic'):loaded.settings.defaultPreset, draft: initialConfig, pendingConfig: null,
   statistics: createStatisticsView(), archiveId: null,
 };
 state.draft = quickConfiguration();
@@ -90,7 +93,7 @@ app.innerHTML = `<a class="skip-link" href="#main">${TEXT.skip}</a>
 const main = document.querySelector('#main'), resetDialog = document.querySelector('#reset-dialog');
 
 function createSession(config) {
-  const Session = config.exerciseType === 'sequence' ? SequenceSession : PracticeSession;
+  const Session = config.exerciseType==='grand-staff'?GrandSession:config.exerciseType === 'sequence' ? SequenceSession : PracticeSession;
   return new Session({ config, getAttempts:()=>compatibleAttempts(learningStore.snapshot(),config), onChange: current => {
     const record = recordFromSession(current, identity);
     if (record) learningStore.saveRecord(record);
@@ -162,7 +165,7 @@ function scheduleReady() {
 }
 function scheduleFeedback() {
   const session = state.session;
-  if (session.config.exerciseType === 'sequence') return;
+  if (['sequence','grand-staff'].includes(session.config.exerciseType)) return;
   if (session.phase !== 'feedback' && !(session.phase === 'complete' && session.completionReason === 'count')) return;
   const attempt = session.attempts.at(-1);
   feedbackTimer = setTimeout(advance, attempt.correct ? FEEDBACK_MS.correct : FEEDBACK_MS.incorrect);
@@ -171,22 +174,35 @@ function updatePractice() {
   practiceView.update(state.session); scheduleReady(); scheduleFeedback(); scheduleDeadline();
 }
 function quickConfiguration() {
-  const draft={ ...SEQUENCE_DEFAULTS, ...state.sequenceOptions, ...state.pianoOptions,
-    ...configurationFromSettings(state.settings, state.quickPreset), exerciseType: state.quickExercise, inputMethod: state.quickInput, selectionMode: state.quickSelection };
-  if(draft.inputMethod==='piano') {
+  const definition=configurationFromSettings(state.settings,state.quickPreset),grand=definition.clef==='grand';
+  const draft={...SEQUENCE_DEFAULTS,...state.sequenceOptions,...state.pianoOptions,...definition,
+    exerciseType:grand?'grand-staff':state.quickExercise==='grand-staff'?'single-note':state.quickExercise,
+    inputMethod:grand?'letter':state.quickInput,selectionMode:state.quickSelection};
+  if(draft.inputMethod==='piano'){
     const clefs=draft.clef==='mixed'?['treble','bass']:[draft.clef];
-    draft.keyboardMin=Math.min(draft.keyboardMin ?? 36,...clefs.map(c=>draft.ranges[c].minMidi));
-    draft.keyboardMax=Math.max(draft.keyboardMax ?? 84,...clefs.map(c=>draft.ranges[c].maxMidi));
+    draft.keyboardMin=Math.min(...clefs.map(c=>draft.ranges[c].minMidi));draft.keyboardMax=Math.max(...clefs.map(c=>draft.ranges[c].maxMidi));
   }
   return validateConfiguration(draft);
+}
+function applyDraftPreset(draft,id){
+  const definition=PRESETS[id];if(!definition)return {...draft,presetId:'custom',presetVersion:2};
+  const grand=definition.clef==='grand';
+  const result={...draft,...definition,presetId:id,presetVersion:2,
+    exerciseType:grand?'grand-staff':draft.exerciseType==='grand-staff'?'single-note':draft.exerciseType,inputMethod:grand?'letter':draft.inputMethod};
+  if(id.endsWith('-random')){result.selectionMode='uniform';result.sequenceStrategy='random';}
+  if(result.inputMethod==='piano'){
+    const clefs=result.clef==='mixed'?['treble','bass']:[result.clef];
+    result.keyboardMin=Math.min(...clefs.map(c=>result.ranges[c].minMidi));result.keyboardMax=Math.max(...clefs.map(c=>result.ranges[c].maxMidi));
+  }
+  return result;
 }
 function displayData() { return visibleLearningData(learningStore.snapshot(), state.session); }
 function homeView() {
   const data = displayData();
   const persistent = recentHomeStatistics(data);
   persistent.recentConfig = recentHomeStatistics(learningStore.snapshot()).recentConfig;
-  return homeMarkup(state.session, quickConfiguration(), persistent) + recommendationMarkup(analyzePractice(quickConfiguration(),compatibleAttempts(data,quickConfiguration())),state.settings.naming) +
-    (data.withheld ? '<p class="sequence-pending-notice" role="status">' + SEQ.withheld + '</p>' : '');
+  return homeMarkup(state.session, quickConfiguration(), persistent) + (quickConfiguration().presetId.endsWith('-random')?'<p class="session-note">'+V11.randomHint+'</p>':recommendationMarkup(analyzePractice(quickConfiguration(),compatibleAttempts(data,quickConfiguration())),state.settings.naming)) +
+    (data.withheld ? '<p class="sequence-pending-notice" role="status">' + (state.session.config.exerciseType==='grand-staff'?GRAND.withheld:SEQ.withheld) + '</p>' : '');
 }
 function renderStatistics(focusSelector = null) {
   main.innerHTML = statisticsMarkup(displayData(), state.statistics, state.settings.naming,
@@ -218,6 +234,9 @@ function showScreen(requested, { focus = true } = {}) {
   }
   if (desiredHash !== requested) history.replaceState(null, '', '#' + desiredHash);
   state.screen = screen; practiceView = null;
+  if(screen==='practice'&&(state.session.config.inputMethod==='piano'||state.session.config.exerciseType==='grand-staff'))document.body.dataset.practice=state.session.config.inputMethod==='piano'?'piano':'grand-staff';
+  else delete document.body.dataset.practice;
+  if(screen==='configure'&&state.draft.presetVersion!==2)state.draft={...state.draft,presetId:'custom',presetVersion:2};
   if (screen === 'home') main.innerHTML = homeView();
   else if (screen === 'configure') main.innerHTML = configurationMarkup(state.draft);
   else if (screen === 'settings') main.innerHTML = settingsMarkup(state.settings, state.storageStatus);
@@ -229,8 +248,8 @@ function showScreen(requested, { focus = true } = {}) {
     if (!document.hidden && state.session.phase === 'paused') state.session.resume();
     if (document.hidden) state.session.pause();
     if (state.session.tick()) { showScreen('summary', { focus }); return; }
-    main.innerHTML = practiceMarkup(state.session.config);
-    practiceView = state.session.config.exerciseType === 'sequence' ? new SequencePracticeView(main) : new PracticeView(main);
+    main.innerHTML = state.session.config.exerciseType==='grand-staff'?grandPracticeMarkup(state.session.config):practiceMarkup(state.session.config);
+    practiceView = state.session.config.exerciseType==='grand-staff'?new GrandPracticeView(main):state.session.config.exerciseType === 'sequence' ? new SequencePracticeView(main) : new PracticeView(main);
     if(state.session.config.inputMethod==='piano') practiceView=new PianoInputView(main,practiceView);
     updatePractice();
   }
@@ -273,9 +292,9 @@ function advance() {
   updatePractice();
   if (nextHadFocus) main.querySelector('[data-answer]').focus({ preventScroll: true });
 }
-function submit(answer) {
+function submit(answer,clef) {
   if (dataChanged || appUpdateLocked || state.screen !== 'practice' || document.hidden || resetDialog.open) return;
-  const attempt = state.session.submit(answer);
+  const attempt = state.session.config.exerciseType==='grand-staff'?state.session.submit(answer,clef ?? practiceView.activeClef):state.session.submit(answer);
   if (!attempt) { if (state.session.phase === 'complete' && !state.session.holdFinalReview) showSummary(); return; }
   clearPending(); updatePractice();
 }
@@ -294,7 +313,7 @@ app.addEventListener('click', event => {
   const piano = event.target.closest('[data-piano]');
   if(piano){if(answerInput.pointerAllowed(event))submit(Number(piano.dataset.piano));return;}
   const answer = event.target.closest('[data-answer],[data-piano]');
-  if (answer) { if (answerInput.pointerAllowed(event)) submit(answer.dataset.answer); return; }
+  if (answer) { if (answerInput.pointerAllowed(event)) submit(answer.dataset.answer,answer.closest('[data-grand-clef]')?.dataset.grandClef); return; }
   const control = event.target.closest('[data-action]');
   if (!control) return;
   event.preventDefault();
@@ -302,8 +321,10 @@ app.addEventListener('click', event => {
   if(action==='reload-data'){location.reload();return;}
   if(dataChanged)return;
   if(action.startsWith('learn-')){requestSession({...quickConfiguration(),selectionMode:action.slice(6)});return;}
-  if(action==='practice-mistakes'){const saved=control.dataset.sessionId?findSaved(control.dataset.sessionId):null;requestSession({...saved?.session.config??state.session.config,selectionMode:'mistakes'});return;}
-  if(action==='piano-left'||action==='piano-right'){const keyboard=main.querySelector('.piano-scroll');keyboard.scrollLeft+=(action==='piano-left'?-1:1)*192;return;}
+  if(action==='practice-mistakes'){const saved=control.dataset.sessionId?findSaved(control.dataset.sessionId):null;requestSession({...saved?.session.config??state.session.config,presetId:'custom',selectionMode:'mistakes'});return;}
+  if(action==='piano-left'||action==='piano-right'){practiceView.navigate(action==='piano-left'?-1:1);return;}
+  if(action==='sequence-page-left'||action==='sequence-page-right'){practiceView.navigateSystem(action==='sequence-page-left'?-1:1);return;}
+  if(action==='grand-focus'){practiceView.focusStaff(control.dataset.clef);return;}
   if (['home', 'practice', 'statistics', 'settings', 'summary'].includes(action)) navigate(action);
   else if (action === 'quick-start') requestSession(quickConfiguration());
   else if (action === 'customize') {
@@ -352,10 +373,15 @@ app.addEventListener('change', event => {
   if(event.target.id==='quick-input'){state.quickInput=event.target.value;state.draft=quickConfiguration();main.innerHTML=homeView();main.querySelector('#quick-input').focus();}
   else if (event.target.id === 'quick-exercise') {
     state.quickExercise = event.target.value;
+    if(state.quickExercise==='grand-staff'){state.quickPreset='grand-basic';state.quickInput='letter';}
+    else if(PRESETS[state.quickPreset]?.clef==='grand')state.quickPreset='treble-basic';
     state.draft = quickConfiguration();
     main.innerHTML = homeView(); main.querySelector('#quick-exercise').focus({ preventScroll: true });
   } else if (event.target.id === 'quick-preset') {
-    state.quickPreset = event.target.value; main.innerHTML = homeView();
+    state.quickPreset = event.target.value;
+    if(PRESETS[state.quickPreset].clef==='grand'){state.quickExercise='grand-staff';state.quickInput='letter';}
+    else if(state.quickExercise==='grand-staff')state.quickExercise='single-note';
+    main.innerHTML = homeView();
     main.querySelector('#quick-preset').focus({ preventScroll: true });
   } else if (event.target.closest('#settings-form')) updatePreferences({ [event.target.name]: event.target.value });
   else if (event.target.closest('#statistics-filters')) {
@@ -370,7 +396,13 @@ app.addEventListener('change', event => {
     renderStatistics('#' + event.target.id);
   } else if (event.target.closest('#practice-form')) {
     const raw = readConfiguration(main.querySelector('#practice-form'), state.draft);
-    state.draft = event.target.id === 'practice-preset' && raw.presetId !== 'custom' ? { ...raw, ...PRESETS[raw.presetId] } : raw;
+    state.draft=raw;
+    if(event.target.id==='practice-preset')state.draft=applyDraftPreset(raw,raw.presetId);
+    if(event.target.id==='practice-exercise'){
+      if(raw.exerciseType==='grand-staff')state.draft=raw.presetId==='custom'?{...raw,clef:'grand',inputMethod:'letter'}:applyDraftPreset(raw,'grand-basic');
+      else if(raw.clef==='grand')state.draft=raw.presetId==='custom'?{...raw,clef:'mixed'}:applyDraftPreset(raw,'treble-basic');
+    }
+    if(event.target.id==='practice-input'&&raw.inputMethod==='piano'&&raw.keyboardMin===undefined)state.draft=applyDraftPreset(raw,raw.presetId);
     if (!event.target.matches('input')) rerenderConfiguration(event.target.id);
   }
 });
@@ -390,6 +422,7 @@ document.addEventListener('keydown', event => {
   if (event.repeat || event.altKey || event.ctrlKey || event.metaKey || state.screen !== 'practice' || document.hidden || resetDialog.open) return;
   if (event.target.closest('input, select, textarea, [contenteditable="true"]')) return;
   if(state.session.config.inputMethod==='piano') return;
+  if(state.session.config.exerciseType==='grand-staff'&&['ArrowUp','ArrowDown'].includes(event.key)){event.preventDefault();practiceView.focusStaff(event.key==='ArrowUp'?'treble':'bass');return;}
   const answer = answerInput.keydown(event, state.session.config.naming);
   if (answer) { event.preventDefault(); submit(answer); }
 });

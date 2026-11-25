@@ -26,6 +26,7 @@ export function mergeSessionRecords(previous, incoming) {
     if (next.attempts.some(attempt => !old.attempts.some(item => same(item, attempt))) ||
         next.activity.some(part => !old.activity.some(item => same(item, part))) ||
         (next.sequences ?? []).some(sequence => !(old.sequences ?? []).some(item => same(item, sequence))) ||
+        (next.pairs ?? []).some(pair => !(old.pairs ?? []).some(item => same(item,pair))) ||
         next.session.status !== old.session.status) throw new DataError('conflict');
     return clone(old);
   }
@@ -51,11 +52,17 @@ export function mergeSessionRecords(previous, incoming) {
     sequences.set(sequence.id, sequence);
   }
 
+  const pairs=new Map((old.pairs ?? []).map(pair=>[pair.id,pair]));
+  for(const pair of next.pairs ?? []){
+    if(pairs.has(pair.id)&&!same(pairs.get(pair.id),pair))throw new DataError('conflict');
+    pairs.set(pair.id,pair);
+  }
   return validateSessionRecord({
     ...old, ...next, session: { ...old.session, ...next.session },
     attempts: [...attempts.values()].sort((a, b) => a.ordinal - b.ordinal),
     activity: [...activity.values()],
     ...(sequences.size ? { sequences: [...sequences.values()] } : {}),
+    ...(pairs.size?{pairs:[...pairs.values()]}:{}),
   });
 }
 

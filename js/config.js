@@ -1,27 +1,41 @@
 const range = (minMidi, maxMidi) => Object.freeze({ minMidi, maxMidi });
-const TREBLE_BASIC = range(60, 72);
-const BASS_STAFF = range(43, 57);
-const preset = (clef, treble = TREBLE_BASIC, bass = BASS_STAFF) =>
-  Object.freeze({ clef, ranges: Object.freeze({ treble, bass }) });
-
-// Pitch limits and all preset definitions are independent of interface copy.
-export const NOTE_LIMITS = Object.freeze({ minMidi: 36, maxMidi: 84 }); // C2–C6
+const OLD_TREBLE = range(60, 72), OLD_BASS = range(43, 57);
+export const BASIC_RANGES = Object.freeze({ treble: range(60, 77), bass: range(43, 60) });
+const preset = (clef, treble = BASIC_RANGES.treble, bass = BASIC_RANGES.bass, noteDistribution = 'uniform') =>
+  Object.freeze({ clef, ranges: Object.freeze({ treble, bass }), noteDistribution });
+export const NOTE_LIMITS = Object.freeze({ minMidi: 36, maxMidi: 84 }); // Readable C2–C6.
 export const PRESETS = Object.freeze({
-  'treble-beginner': preset('treble', range(60, 67)),
   'treble-basic': preset('treble'),
-  'treble-staff': preset('treble', range(64, 77)),
-  'treble-extended': preset('treble', range(57, 84)),
-  'bass-beginner': preset('bass', TREBLE_BASIC, range(43, 50)),
-  'bass-staff': preset('bass'),
-  'bass-extended': preset('bass', TREBLE_BASIC, range(36, 64)),
+  'treble-extended': preset('treble', range(57, 84), BASIC_RANGES.bass, 'extended'),
+  'treble-random': preset('treble', range(36, 84)),
+  'bass-basic': preset('bass'),
+  'bass-extended': preset('bass', BASIC_RANGES.treble, range(36, 64), 'extended'),
+  'bass-random': preset('bass', BASIC_RANGES.treble, range(36, 84)),
   mixed: preset('mixed'),
+  'grand-basic': preset('grand'),
+  'grand-extended': preset('grand', range(57, 84), range(36, 64), 'extended'),
 });
+// Historical snapshots stay valid against the exact definitions used to create them.
+export const LEGACY_PRESETS = Object.freeze({
+  'treble-beginner': { clef:'treble', ranges:{treble:range(60,67),bass:OLD_BASS} },
+  'treble-basic': { clef:'treble', ranges:{treble:OLD_TREBLE,bass:OLD_BASS} },
+  'treble-staff': { clef:'treble', ranges:{treble:range(64,77),bass:OLD_BASS} },
+  'treble-extended': { clef:'treble', ranges:{treble:range(57,84),bass:OLD_BASS} },
+  'bass-beginner': { clef:'bass', ranges:{treble:OLD_TREBLE,bass:range(43,50)} },
+  'bass-staff': { clef:'bass', ranges:{treble:OLD_TREBLE,bass:OLD_BASS} },
+  'bass-extended': { clef:'bass', ranges:{treble:OLD_TREBLE,bass:range(36,64)} },
+  mixed: { clef:'mixed', ranges:{treble:OLD_TREBLE,bass:OLD_BASS} },
+});
+export const migratePresetPreference = id => ({
+  'treble-beginner':'treble-basic', 'treble-staff':'treble-basic',
+  'bass-beginner':'bass-basic', 'bass-staff':'bass-basic',
+})[id] ?? id;
 export const DEFAULT_SETTINGS = Object.freeze({
   theme: 'system', naming: 'czech',
   defaultPreset: 'treble-basic', defaultSessionType: 'unlimited',
 });
 export const EXERCISE_CONFIG = Object.freeze({
-  ...PRESETS['treble-basic'], presetId: 'treble-basic',
+  ...PRESETS['treble-basic'], presetId: 'treble-basic', presetVersion: 2,
   naming: DEFAULT_SETTINGS.naming, sessionType: 'unlimited',
   durationMs: 60000, questionCount: 10,
   exerciseType: 'single-note', inputMethod: 'letter',

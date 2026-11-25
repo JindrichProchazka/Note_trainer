@@ -17,13 +17,16 @@ export function compareAttempts(a, b) {
 }
 
 export function configurationKey(config) {
-  const clefs = config.clef === 'mixed' ? ['treble', 'bass'] : [config.clef];
+  const clefs = ['mixed','grand'].includes(config.clef) ? ['treble', 'bass'] : [config.clef];
   return JSON.stringify({
     clef: config.clef, ranges: Object.fromEntries(clefs.map(clef => [clef, config.ranges[clef]])),
     sessionType: config.sessionType,
     limit: config.sessionType === 'timed' ? config.durationMs : config.sessionType === 'count' ? config.questionCount : null,
     ...(config.selectionMode && config.selectionMode!=='uniform'?{selectionMode:config.selectionMode}:{}),
     ...(config.inputMethod==='piano'?{keyboard:[config.keyboardMin,config.keyboardMax],noteLabels:config.noteLabels}:{}),
+    ...(config.presetVersion===2?{presetVersion:2,noteDistribution:config.noteDistribution}:{}),
+    ...(config.octaveMarkers?{octaveMarkers:true}:{}),
+    ...(config.exerciseType==='grand-staff'?{feedback:config.feedbackMode}:{}),
     exerciseType: config.exerciseType, inputMethod: config.inputMethod,
     ...(config.exerciseType === 'sequence' ? { sequenceLength: config.sequenceLength, strategy: config.sequenceStrategy, feedback: config.feedbackMode,
       ...(config.sequenceStrategy === 'intervals' ? { intervalMix: config.intervalMix } : {}) } : {}),

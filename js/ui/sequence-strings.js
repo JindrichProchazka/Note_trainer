@@ -1,5 +1,5 @@
 export const SEQ = Object.freeze({
-  mode: 'Practice mode', modes: { 'single-note': 'Single Notes', sequence: 'Note Sequences' },
+  mode: 'Practice mode', modes: { 'single-note': 'Single Notes', sequence: 'Note Sequences', 'grand-staff': 'Grand Staff' },
   title: 'Read the sequence.', eyebrow: 'NOTE SEQUENCES',
   length: 'Sequence length', notes: count => count + ' notes', strategy: 'Generation strategy',
   strategies: { random: 'Random', stepwise: 'Stepwise', melodic: 'Melodic', repeated: 'Repeated notes', intervals: 'Mixed intervals' },
@@ -26,5 +26,5 @@ export const SEQ = Object.freeze({
   timingHint: 'Sequence response times can benefit from reading ahead. Compare the same exercise, length and feedback mode.',
   withheld: 'Current delayed-sequence results stay hidden until review or session end. Statistics temporarily omit this session.',
   configError: 'Choose a supported sequence length, strategy, feedback mode and interval variety.',
-  exerciseError: 'Choose Single Notes or Note Sequences with letter answers.',
+  exerciseError: 'Choose a supported exercise and input. Grand Staff uses letter answers.',
 });

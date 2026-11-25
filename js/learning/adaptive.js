@@ -1,13 +1,15 @@
+import { distributionWeight } from '../exercises/distribution.js';
 import { naturalNotesBetween, writtenName } from '../music/notes.js';
 import { contextId, compareAttempts } from './context.js';
 import { learningState, median } from './mastery.js';
 export const ADAPTIVE_RULES=Object.freeze({
   window:20, evidenceTarget:20, weakEvidence:5, accuracyTarget:.8, dueDays:14,
-  singleTargetMs:1000, sequenceTargetMs:500, repeatMultiplier:.08,
+  singleTargetMs:1000, sequenceTargetMs:500, grandTargetMs:2000, repeatMultiplier:.08,
   base:1, error:4, slow:2, sparse:2, overdue:2, learning:1, focusBonus:8,
 });
 export function compatibilityKey(config) {
   return JSON.stringify([config.exerciseType,config.inputMethod,
+    ...(config.exerciseType==='grand-staff'?[config.feedbackMode]:[]),...(config.octaveMarkers?['octave-markers']:[]),
     ...(config.exerciseType==='sequence'?[config.sequenceLength,config.sequenceStrategy,config.feedbackMode,config.sequenceStrategy==='intervals'?config.intervalMix:null]:[]),
     ...(config.inputMethod==='piano'?[config.keyboardMin,config.keyboardMax,config.noteLabels]:[])]);
 }
@@ -23,7 +25,7 @@ export function contextProfile(context,attempts,now=Date.now(),rules=ADAPTIVE_RU
   const accuracy=recent.length?correct.length/recent.length:null;
   const response=median(correct.map(a=>a.responseTimeMs));
   const days=ordered.length?Math.max(0,(now-Date.parse(ordered.at(-1).timestamp))/86400000):0;
-  const target=context.exerciseType==='sequence'?rules.sequenceTargetMs:rules.singleTargetMs;
+  const target=context.exerciseType==='grand-staff'?rules.grandTargetMs:context.exerciseType==='sequence'?rules.sequenceTargetMs:rules.singleTargetMs;
   const reasons=[];
   if(!ordered.length)reasons.push('unseen');
   else {
@@ -41,7 +43,7 @@ export function contextProfile(context,attempts,now=Date.now(),rules=ADAPTIVE_RU
     mistakes:recent.some(a=>!a.correct),weight};
 }
 export function analyzePractice(config,attempts,now=Date.now()) {
-  const clefs=config.clef==='mixed'?['treble','bass']:[config.clef];
+  const clefs=['mixed','grand'].includes(config.clef)?['treble','bass']:[config.clef];
   return clefs.flatMap(clef=>naturalNotesBetween(config.ranges[clef].minMidi,config.ranges[clef].maxMidi)
     .map(note=>({...contextProfile({writtenNote:writtenName(note),clef,exerciseType:config.exerciseType,inputMethod:config.inputMethod},attempts,now),note})));
 }
@@ -56,7 +58,7 @@ export function adaptiveNote(notes,clef,config,attempts,previousMidi,random=Math
   const weights=notes.map(note=>{
     const profile=contextProfile({writtenNote:writtenName(note),clef,exerciseType:config.exerciseType,inputMethod:config.inputMethod},attempts,now,rules);
     const focus=config.selectionMode==='mistakes'?profile.mistakes:config.selectionMode==='weak'?profile.reasons.length>0:false;
-    return (profile.weight+(focus?rules.focusBonus:0))*(notes.length>1&&note.midi===previousMidi?rules.repeatMultiplier:1);
+    return distributionWeight(note,clef,config)*(profile.weight+(focus?rules.focusBonus:0))*(notes.length>1&&note.midi===previousMidi?rules.repeatMultiplier:1);
   });
   return weightedPick(notes,weights,random);
 }

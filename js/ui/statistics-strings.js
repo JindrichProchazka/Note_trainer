@@ -7,7 +7,7 @@ export const STATS = Object.freeze({
   clef: 'Clef', allClefs: 'All clefs', exercise: 'Exercise type', input: 'Input method',
   allExercises: 'All exercises', allInputs: 'All input methods', configuration: 'Configuration',
   allConfigurations: 'All configurations · combined', moreFilters: 'Exercise and comparison filters',
-  exerciseNames: { 'single-note': 'Single-note recognition', sequence: 'Note sequences', piano: 'Piano practice' },
+  exerciseNames: { 'grand-staff':'Grand Staff', 'single-note': 'Single-note recognition', sequence: 'Note sequences', piano: 'Piano practice' },
   inputNames: { letter: 'Letter answers', piano: 'Piano keys', midi: 'MIDI' },
   scope: 'Totals combine the selected ranges and session types. Select a configuration to compare equivalent practice.',
   filteredStates: 'Learning states use only the evidence in the selected date range and filters.',

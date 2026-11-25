@@ -1,3 +1,4 @@
+import { GRAND } from './usability-strings.js';
 import { LEARN } from './learning-strings.js';
 import { SEQ } from './sequence-strings.js';
 import { sequenceResultsMarkup } from './sequence-results.js';
@@ -33,6 +34,7 @@ export function summaryMarkup(session, { historical = false, naming = session.co
       ${metric(TEXT.correctPerMinute, stats.correctNotesPerMinute.toFixed(1))}
     </dl>
     ${session.config.exerciseType === 'sequence' ? sequenceResultsMarkup(stats, naming) : ''}
+    ${session.config.exerciseType==='grand-staff'?'<p class="session-note">'+GRAND.completed+': '+stats.completedPairs+' · '+GRAND.partial+': '+stats.partialPairs+'. '+GRAND.resultHint+'</p>':''}
     ${stats.answered && !stats.correct ? `<p class="session-note">${TEXT.noCorrectResponses}</p>` : ''}
     <section class="card missed-card" aria-labelledby="missed-title">
       <h2 id="missed-title">${TEXT.missed}</h2>

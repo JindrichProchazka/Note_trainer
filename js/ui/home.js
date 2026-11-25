@@ -43,10 +43,10 @@ export function homeMarkup(session, quickConfig, persistent = null) {
     </div>
     <div class="home-grid">
       <section class="card exercise-card" aria-labelledby="exercise-title">
-        <p class="eyebrow">${TEXT.exerciseLabel}</p><h2 id="exercise-title">${quickConfig.exerciseType === 'sequence' ? SEQ.modes.sequence : TEXT.exerciseTitle}</h2>
+        <p class="eyebrow">${TEXT.exerciseLabel}</p><h2 id="exercise-title">${quickConfig.exerciseType === 'single-note' ? TEXT.exerciseTitle : SEQ.modes[quickConfig.exerciseType]}</h2>
         <label class="form-field quick-preset" for="quick-exercise">${SEQ.mode}
           <select id="quick-exercise">${Object.entries(SEQ.modes).map(([value, label]) => `<option value="${value}"${value === quickConfig.exerciseType ? ' selected' : ''}>${label}</option>`).join('')}</select></label>
-        <label class="form-field quick-preset" for="quick-input">${PIANO.input}<select id="quick-input">${Object.entries(PIANO.inputs).map(([value,label])=>`<option value="${value}"${value===quickConfig.inputMethod?' selected':''}>${label}</option>`).join('')}</select></label>
+        <label class="form-field quick-preset" for="quick-input">${PIANO.input}<select id="quick-input"${quickConfig.exerciseType==='grand-staff'?' disabled':''}>${Object.entries(PIANO.inputs).map(([value,label])=>`<option value="${value}"${value===quickConfig.inputMethod?' selected':''}>${label}</option>`).join('')}</select></label>
         <label class="form-field quick-preset" for="quick-preset">${TEXT.preset}
           <select id="quick-preset">${presetOptions(quickConfig.presetId, false)}</select></label>
         ${quickConfig.exerciseType === 'sequence' ? `<p class="range-description">${exerciseDescription(quickConfig)}</p>` : ''}
@@ -76,7 +76,7 @@ export function homeMarkup(session, quickConfig, persistent = null) {
       <div><p class="eyebrow" id="recent-title">${STATS.recentlyUsed}</p>
         <p>${h(configurationDescription({ ...recentConfig, naming: quickConfig.naming }))}</p>
         <p class="muted">${h(exerciseDescription(recentConfig))} · ${h(sessionDescription(recentConfig))}</p></div>
-      ${['single-note', 'sequence'].includes(recentConfig.exerciseType) && ['letter','piano'].includes(recentConfig.inputMethod)
+      ${['single-note', 'sequence','grand-staff'].includes(recentConfig.exerciseType) && ['letter','piano'].includes(recentConfig.inputMethod)
         ? `<button class="button subtle" data-action="repeat-recent">${STATS.repeatRecent}</button>` : ''}
     </section>` : ''}
   </section>`;

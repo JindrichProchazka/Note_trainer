@@ -93,7 +93,7 @@ test('M2 preferences and unknown compatible fields remain byte-for-byte untouche
   const store = createLearningStore({ getStorage: () => storage });
   store.load(); store.saveRecord(recordFixture());
   assert.equal(storage.getItem(SETTINGS_KEY), legacy);
-  assert.equal(preferences.theme, 'dark'); assert.equal(preferences.defaultPreset, 'bass-staff');
+  assert.equal(preferences.theme, 'dark'); assert.equal(preferences.defaultPreset, 'bass-basic');
 });
 
 test('known manifest and record migrations enrich evidence without mutating source documents', () => {

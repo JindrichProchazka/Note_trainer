@@ -136,3 +136,17 @@ export function renderReferenceStaff(groups, label, clef = 'treble') {
     }).join('')}
   </svg>`;
 }
+
+/** Aligned piano staves; shared pitch/ledger/stem geometry, with a connecting brace. */
+export function renderGrandStaff(notes,label,results={}){
+  const top=notationLayout(notes.treble,'treble'),bottom=notationLayout(notes.bass,'bass');
+  const topStem=notationStem(top),bottomStem=notationStem(bottom);
+  const offset=Math.max(170,Math.max(148,top.y+18,topStem.endY+4)+16-Math.min(68,bottom.y-18,bottomStem.endY-4));
+  const minY=Math.min(0,top.y-24),height=Math.max(216,top.y+24,offset+170,offset+bottom.y+24,offset+bottomStem.endY+4)-minY;
+  const middle=(68+offset+148)/2;
+  return `<svg class="notation grand-notation" viewBox="0 ${minY} 480 ${height}" role="img" aria-label="${escapeText(label)}" xmlns="http://www.w3.org/2000/svg">
+    <path class="grand-brace" d="M24 68 C5 68 24 ${middle-18} 8 ${middle} C24 ${middle+18} 5 ${offset+148} 24 ${offset+148}" fill="none" stroke="currentColor" stroke-width="4"/>
+    <line x1="32" x2="32" y1="68" y2="${offset+148}" stroke="currentColor" stroke-width="1.5"/>
+    ${['treble','bass'].map(clef=>`<g class="grand-staff" data-clef="${clef}" data-result="${escapeText(results[clef]??'unanswered')}" transform="translate(0 ${clef==='bass'?offset:0})">${staffMarkup()}${CLEFS[clef].svg}${noteMarkup(notes[clef],clef,STAFF.noteX)}</g>`).join('')}
+  </svg>`;
+}

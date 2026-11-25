@@ -1,3 +1,4 @@
+import { V11 } from './usability-strings.js';
 import { PracticeView } from './practice.js';
 import { renderSequenceSystem } from '../music/notation.js';
 import { sequenceResults } from '../session/sequence-statistics.js';
@@ -29,10 +30,11 @@ export function sequenceDisplay(session) {
   });
 }
 
-export function sequenceNotationMarkup(session, perSystem = 3) {
+export function sequenceNotationMarkup(session, perSystem = 3, page = null) {
   const entries = sequenceDisplay(session), systems = [];
   for (let index = 0; index < entries.length; index += perSystem) {
     const group = entries.slice(index, index + perSystem);
+    if(page!==null&&Math.floor(index/perSystem)!==page)continue;
     systems.push(renderSequenceSystem(group, SEQ.system(TEXT.clefs[session.question.clef], index + 1, index + group.length), session.question.clef));
   }
   return systems.join('') + '<ol class="sequence-text-alternative">' +
@@ -45,22 +47,34 @@ export class SequencePracticeView extends PracticeView {
     super(root);
     this.host = root.querySelector('#question-notation');
     this.perSystem = this.host.clientWidth >= 600 ? 6 : 3;
-    this.lastSystem = null;
+    this.lastSystem = null;this.page=0;this.lastToken=null;this.paginated=root.querySelector('.piano-input')!==null;
     this.observer = globalThis.ResizeObserver ? new ResizeObserver(() => {
       const count = this.host.clientWidth >= 600 ? 6 : 3;
       if (count !== this.perSystem && this.session) {
         this.perSystem = count;
+        this.page=Math.floor(Math.min(this.session.itemIndex,this.session.question.notes.length-1)/this.perSystem);
         this.renderQuestion(this.session);
       }
     }) : null;
     this.observer?.observe(this.host);
   }
   dispose() { this.observer?.disconnect(); }
-  renderQuestion(session) { this.host.innerHTML = sequenceNotationMarkup(session, this.perSystem); }
+  renderQuestion(session) {
+    this.host.innerHTML=sequenceNotationMarkup(session,this.perSystem,this.paginated?this.page:null);
+    const toolbar=this.root.querySelector('.sequence-page-toolbar');
+    if(toolbar){const total=Math.ceil(session.question.notes.length/this.perSystem);toolbar.hidden=total===1;
+      this.root.querySelector('#sequence-page-label').textContent=V11.pageSystem+' '+(this.page+1)+'/'+total;
+      toolbar.querySelector('[data-action="sequence-page-left"]').disabled=this.page===0;
+      toolbar.querySelector('[data-action="sequence-page-right"]').disabled=this.page===total-1;
+    }
+  }
+  navigateSystem(direction){this.page=Math.max(0,Math.min(Math.ceil(this.session.question.notes.length/this.perSystem)-1,this.page+direction));this.renderQuestion(this.session);}
   update(session) {
     this.session = session;
     const paused = session.phase === 'paused', complete = session.phase === 'complete';
     const review = session.sequenceReviewed;
+    const token=session.question.id+':'+session.itemIndex;
+    if(this.lastToken!==token){this.page=Math.floor(Math.min(session.itemIndex,session.question.notes.length-1)/this.perSystem);this.lastToken=token;}
     this.renderQuestion(session);
     this.root.querySelector('#staff-caption').textContent = TEXT.clefs[session.question.clef] + ' · ' + rangeDescription(session.config, session.question.clef);
     this.root.querySelector('#sequence-progress').textContent = SEQ.progress(session.questionCount, session.currentAnswers.length, session.question.notes.length);
@@ -101,7 +115,7 @@ export class SequencePracticeView extends PracticeView {
     }
     this.updateStatistics(session);
     const system = Math.floor(session.itemIndex / this.perSystem);
-    if (!paused && !review && session.itemIndex > 0 && this.lastSystem !== system) {
+    if (!this.paginated && !paused && !review && session.itemIndex > 0 && this.lastSystem !== system) {
       this.host.querySelector('.sequence-note[data-active]')?.closest('svg')?.scrollIntoView({ block: 'nearest' });
     }
     this.lastSystem = system;

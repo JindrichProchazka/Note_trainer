@@ -1,7 +1,7 @@
 # NoteTrainer
 
 A lightweight piano note-reading trainer built with HTML, CSS and vanilla JavaScript.
-**Milestones 1–8 are implemented; application version v1.0.0.** No production build, backend, account,
+**Milestones 1–8 are implemented; application version v1.1.0.** No production build, backend, account,
 external font or runtime dependency is required.
 
 ## Launch locally
@@ -47,6 +47,27 @@ Statistics separates exercise contexts and shows completed/partial sequences.
 Later-note response times benefit from reading ahead and should be compared
 within equivalent exercise configurations. Recent configurations can be repeated.
 See [M4 validation and manual checks](docs/validation/MILESTONE_4.md).
+## Grand Staff (v1.1)
+
+Choose **Grand Staff** or a Grand Staff preset. One natural note appears on each
+aligned staff with a connecting brace. Answer either hand first using its row.
+For a physical keyboard, **↑** selects treble/right hand, **↓** selects bass/left
+hand; then use the usual letter keys. Each row locks after one answer.
+
+Immediate feedback reveals each answer; delayed feedback stays neutral until both
+answers. Choose **Next pair** after review. Timed/free/count sessions, custom
+independent ranges, adaptive/weak/mistake practice and history are supported.
+Count limits mean **pairs**; Statistics counts **individual answered notes**.
+A partial/interrupted pair keeps its answer; an unanswered note is never an error.
+
+Both response clocks begin when the pair becomes ready and exclude pauses.
+The second answer includes time spent on the first staff. Compare Grand Staff
+with equivalent feedback/configurations, separately from isolated notes/sequences.
+Pair review pauses practice. Shared active time is split equally between clefs,
+never doubled. Mastery uses separate Grand Staff contexts and a 2000 ms target.
+Grand Staff currently supports **paired notes with letter input**; piano input,
+Grand Staff sequences, chords and rhythm are intentionally unavailable.
+
 ## Practice
 
 **Quick start** uses the selected preset and your saved default session type and
@@ -58,15 +79,23 @@ All exercises contain natural notes only:
 
 | Preset | Treble range | Bass range |
 | --- | --- | --- |
-| Treble – Beginner | C4–G4 | — |
-| Treble – Basic | C4–C5 | — |
-| Treble – Staff | E4–F5 | — |
+| Treble – Basic | C4–F5 | — |
 | Treble – Extended | A3–C6 | — |
-| Bass – Beginner | — | G2–D3 |
-| Bass – Staff | — | G2–A3 |
+| Treble – Random | C2–C6 | — |
+| Bass – Basic | — | G2–C4 |
 | Bass – Extended | — | C2–E4 |
-| Mixed Clefs | C4–C5 | G2–A3 |
+| Bass – Random | — | C2–C6 |
+| Mixed Clefs | C4–F5 | G2–C4 |
+| Grand Staff – Basic | C4–F5 | G2–C4 |
+| Grand Staff – Extended | A3–C6 | C2–E4 |
 | Custom | Select C2–C6 | Select C2–C6 |
+
+Basic covers common positions. Extended gives notes outside Basic sixfold weight,
+and other notes outside the staff threefold weight. Adaptive weights multiply
+these factors. Structured sequences emphasize their starting pitch; random
+sequences emphasize each note. Random presets uniformly use the full supported
+range, bypass adaptive weighting and use random sequence generation.
+Old Beginner/Staff preferences map to Basic; historical configurations stay exact.
 
 Custom mixed exercises use **independent ranges for each clef**. A range may
 contain just one pitch. Invalid or reversed ranges cannot start a session.
@@ -167,6 +196,7 @@ Mastery is recalculated per exact context within the selected filters:
 | Familiar | >=5 attempts, >=80% correct in latest 10 or all available |
 | Mastered | >=20 attempts, >=95% in latest 20, correct median <1000 ms in that window |
 
+Grand Staff uses a separate 2000 ms mastery response target.
 Mastered takes precedence and can decrease with recent mistakes/slower responses.
 Adaptive selection uses these classifications alongside recent evidence.
 
@@ -189,12 +219,20 @@ cd C:\Users\jindr\Documents\Note_trainer\Note_trainer
 npm.cmd test
 ```
 
-**235 tests pass**, including all 210 prior tests. New tests cover complete offline
+**253 tests pass**, including all 235 prior tests (preset expectations updated for v1.1). New tests cover complete offline
 asset caching/version integrity, deployment scope, failed installation, update
 approval, backup validation/migration, duplicate/conflict handling, atomic import
 failures, concurrent-change guards and preference-preserving reset.
 
-Essential embedded Chromium checks on 2026-11-24 used isolated port 5175:
+v1.1 Chromium validation on 2026-11-25 used isolated port 5177. Requested
+320×568, 390×844, 430×932, 844×390 and 932×430 viewports kept both Grand Staff
+answer rows and piano notation/keys visible without scrolling. Checked bass-first
+and keyboard answers, delayed partial-pair reload/statistics, pair review,
+stable keyboard/rotation, explicit octave pages, a 16-note paged piano sequence
+and PWA update activation. No console errors/warnings were observed.
+Physical iPhone touch/notches/standalone behavior still needs device verification.
+
+Earlier embedded Chromium checks on 2026-11-24 used isolated port 5175:
 server-stopped offline startup, adaptive piano sequence practice, saved results
 after reload, offline export, actual exported-file preview and duplicate merge;
 multi-tab update deferral/activation preserved evidence. Reset cancellation and
@@ -245,8 +283,8 @@ All production resource URLs and imports are relative. Navigation uses fragments
 so the repository root works under **/Note_trainer/** without a build or URL rewrite.
 The local server deliberately provides that project subpath for testing.
 
-Milestones 7–8 changes are local; nothing has been committed, pushed, tagged or
-published. Rhythm, intervals, chords, grand staff and hardware MIDI remain deferred.
+v1.1 changes are local; nothing has been committed, pushed, tagged or
+published. Rhythm, intervals, chords and hardware MIDI remain deferred.
 
 See [the product specification](docs/PRODUCT_SPEC.md) and
 [implementation plan](docs/IMPLEMENTATION_PLAN.md) for the roadmap.
@@ -254,11 +292,19 @@ See [the product specification](docs/PRODUCT_SPEC.md) and
 ## Virtual piano and adaptive practice
 
 Choose **Virtual piano** as Answer input on Home or in practice configuration.
-Single notes and sequences validate the exact MIDI pitch and octave. Configure
-the keyboard within C2–C6; it must contain the selected target ranges. Labels are
-off by default. Keys keep their size and scroll within the keyboard; automatic
-panning keeps the active target visible. Tab/Enter can activate keys. Targets
-remain natural notes; black keys are available as piano responses.
+Single notes and sequences validate exact MIDI pitch and octave. The default
+keyboard covers the chosen targets; custom bounds remain available within C2–C6.
+Labels and octave/middle-C reference markers are optional and off by default.
+
+Basic ranges fit portrait screens without horizontal scrolling (white keys are
+at least 24 CSS px; about 27 px at 320 px). Wider configured ranges use labelled
+octave pages or fit more keys in landscape. Pages never follow/reveal the target;
+use the arrow buttons deliberately. Rotation preserves the question, attempts,
+timer and selected octave where paging is needed.
+
+Piano/Grand Staff practice uses a compact Home/Pause/Finish toolbar and safe-area
+padding. Landscape keeps notation, feedback, progress and keyboard together.
+Long piano sequences use readable staff pages with manual review navigation.
 
 Question selection offers Uniform, Adaptive, Practice Weak Notes and Practice
 Mistakes. Home explains weak areas and launches a recommended configuration;

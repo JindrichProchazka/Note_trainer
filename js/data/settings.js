@@ -1,4 +1,4 @@
-import { DEFAULT_SETTINGS, PRESETS } from '../config.js';
+import { DEFAULT_SETTINGS, PRESETS, migratePresetPreference } from '../config.js';
 
 export const SETTINGS_KEY = 'notetrainer.settings';
 export const SETTINGS_VERSION = 1;
@@ -13,8 +13,9 @@ export function validateSettings(input) {
   const settings = { ...DEFAULT_SETTINGS };
   for (const [key, values] of Object.entries(options)) {
     if (Object.hasOwn(input, key)) {
-      if (!values.includes(input[key])) throw new TypeError('Invalid setting: ' + key);
-      settings[key] = input[key];
+      const value=key==='defaultPreset'?migratePresetPreference(input[key]):input[key];
+      if (!values.includes(value)) throw new TypeError('Invalid setting: ' + key);
+      settings[key] = value;
     }
   }
   return Object.freeze(settings);

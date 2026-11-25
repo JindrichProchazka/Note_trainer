@@ -81,7 +81,7 @@ function mergeRecord(a,b){
   if(terminal(next)){
     if(canonical(merged.attempts)!==canonical(next.attempts)||
        canonical(merged.activity)!==canonical(next.activity)||
-       canonical(merged.sequences??[])!==canonical(next.sequences??[]))throw new DataError('conflict','Evidence conflicts with a completed session');
+       canonical(merged.sequences??[])!==canonical(next.sequences??[])||canonical(merged.pairs??[])!==canonical(next.pairs??[]))throw new DataError('conflict','Evidence conflicts with a completed session');
     return next;
   }
   return merged;

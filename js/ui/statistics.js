@@ -1,3 +1,4 @@
+import { GRAND } from './usability-strings.js';
 import { SEQ } from './sequence-strings.js';
 import { TEXT } from './strings.js';
 import { STATS } from './statistics-strings.js';
@@ -15,7 +16,7 @@ export function createStatisticsView() {
     clef: 'treble', octave: 4, sort: 'pitch', selectedContext: null };
 }
 function filterMarkup(data, filters, naming) {
-  const exercises = [...new Set(['single-note', 'sequence', ...data.sessions.map(record => record.session.config.exerciseType)])];
+  const exercises = [...new Set(['single-note', 'sequence', 'grand-staff', ...data.sessions.map(record => record.session.config.exerciseType)])];
   const inputs = [...new Set(['letter', 'piano', ...data.sessions.map(record => record.session.config.inputMethod)])];
   const configs = new Map(data.sessions.map(record => [configurationKey(record.session.config), record.session.config]));
   const configOptions = [...configs].map(([key, config]) => [encodeURIComponent(key),
@@ -54,6 +55,7 @@ function overviewMarkup(stats, view) {
   if (stats.sequences.length || stats.filters.exerciseType === 'sequence') metrics.push(
     [SEQ.completed, values.completedSequences, 'overview-sequences'],
     [SEQ.partial, values.partialSequences, 'overview-partial-sequences']);
+  if(stats.pairs.length||stats.filters.exerciseType==='grand-staff')metrics.push([GRAND.completed,values.completedPairs,'overview-pairs'],[GRAND.partial,values.partialPairs,'overview-partial-pairs']);
   return `<section class="statistics-overview" aria-label="${STATS.tabs.overview}">
     <dl class="metrics stats-metrics">${metrics.map(values => metric(...values)).join('')}</dl>
     ${!values.answered && values.durationMs === 0 ? `<p class="empty-state">${STATS.overviewEmpty}</p>` : ''}
@@ -68,8 +70,9 @@ export function statisticsMarkup(data, view, naming, activeSessionId = null, now
     <p class="eyebrow">${STATS.eyebrow}</p>
     <h1 id="statistics-title" tabindex="-1">${STATS.title}</h1>
     <p class="lead">${STATS.description}</p>
-    ${data.withheld ? `<p class="sequence-pending-notice" role="status">${SEQ.withheld}</p>` : ''}
+    ${data.withheld ? `<p class="sequence-pending-notice" role="status">${data.withheldType==='grand-staff'?GRAND.withheld:SEQ.withheld}</p>` : ''}
     ${filterMarkup(data, stats.filters, naming)}
+    ${stats.attempts.some(a=>a.exerciseType==='grand-staff')||stats.filters.exerciseType==='grand-staff'?'<p class="stats-hint">'+GRAND.timingHint+'</p>':''}
     ${stats.sequences.length || stats.filters.exerciseType === 'sequence' ? `<p class="stats-hint">${SEQ.timingHint}</p>` : ''}
     <p class="stats-hint stats-scope">${STATS.scope}</p>
     ${stats.configurations.length > 1 ? `<details class="configuration-breakdown"><summary>${STATS.configurationCount(stats.configurations.length)}</summary>

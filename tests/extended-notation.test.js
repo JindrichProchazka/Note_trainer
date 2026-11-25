@@ -32,7 +32,7 @@ for (const [clef, letter, octave, position, ledgers] of [
 
 test('all preset notes fit their SVG viewport with no notehead or stem clipping', () => {
   for (const preset of Object.values(PRESETS)) {
-    for (const clef of preset.clef === 'mixed' ? ['treble','bass'] : [preset.clef]) {
+    for (const clef of ['mixed','grand'].includes(preset.clef) ? ['treble','bass'] : [preset.clef]) {
       const { minMidi,maxMidi } = preset.ranges[clef];
       for (const note of naturalNotesBetween(minMidi,maxMidi)) {
         const layout = notationLayout(note,clef);

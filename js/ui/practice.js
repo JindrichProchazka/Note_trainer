@@ -1,3 +1,4 @@
+import { V11 } from './usability-strings.js';
 import { pianoMarkup } from './piano-keyboard.js';
 import { SEQ } from './sequence-strings.js';
 import { LETTERS } from '../music/notes.js';
@@ -16,6 +17,7 @@ export function practiceMarkup(config) {
     <div class="practice-toolbar">
       <p class="session-progress" id="session-progress" aria-live="off"></p>
       <div class="practice-actions">
+        <button class="button subtle practice-home" data-action="home">${TEXT.home}</button>
         <button class="button subtle" data-action="pause" id="pause-button">${TEXT.pause}</button>
         <button class="button subtle" data-action="finish" id="finish-button">${TEXT.finish}</button>
       </div>
@@ -24,6 +26,7 @@ export function practiceMarkup(config) {
       <div class="staff-stage">
         <p class="staff-caption" id="staff-caption"></p>
         <div id="question-notation"></div>
+        ${config.exerciseType==='sequence'&&config.inputMethod==='piano'?'<div class="sequence-page-toolbar"><button class="button subtle" data-action="sequence-page-left" aria-label="'+V11.previousSystem+'">←</button><span id="sequence-page-label"></span><button class="button subtle" data-action="sequence-page-right" aria-label="'+V11.nextSystem+'">→</button></div>':''}
         ${config.exerciseType === 'sequence' ? '<p class="sequence-progress" id="sequence-progress"></p><p class="sequence-convention">' + SEQ.convention + '</p>' : ''}
         <div class="pause-cover" id="pause-cover" hidden>
           <h2>${TEXT.paused}</h2><p>${TEXT.pauseDescription}</p>

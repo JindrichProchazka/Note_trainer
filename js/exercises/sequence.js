@@ -1,4 +1,4 @@
-import { adaptiveNote } from '../learning/adaptive.js';
+import { selectQuestionNote } from './generator.js';
 import { SEQUENCE_STRATEGIES, INTERVAL_MIXES } from '../config.js';
 import { naturalNotesBetween } from '../music/notes.js';
 import { activeClefs, validateConfiguration } from './configuration.js';
@@ -27,8 +27,8 @@ export function createSequenceGenerator(input, random = Math.random, learning = 
     if (!Number.isInteger(length) || length < 1 || length > config.sequenceLength) throw new RangeError('Invalid sequence length');
     const clef = clefs.length === 1 ? clefs[0] : pick(clefs, random);
     const pool = pools[clef], strategy = config.sequenceStrategy;
-    const adaptive=config.selectionMode && config.selectionMode!=='uniform';
-    const choose = previousMidi => adaptiveNote(pool,clef,config,learning.getAttempts?.() ?? [],previousMidi,random,learning.now?.() ?? Date.now());
+    const adaptive=!!(config.selectionMode && config.selectionMode!=='uniform' || config.noteDistribution==='extended');
+    const choose = previousMidi => selectQuestionNote(pool,clef,config,previousMidi,random,learning);
     let index = adaptive ? pool.indexOf(choose(previous?.clef===clef?previous.midi:null)) : randomIndex(pool.length, random);
     const notes = [pool[index]];
     const direction = pick([-1, 1], random);

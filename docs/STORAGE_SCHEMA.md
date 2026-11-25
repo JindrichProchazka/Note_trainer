@@ -304,3 +304,42 @@ Reset empties active learning data, preserves the raw preferences envelope and
 does not reclaim old copies. Browser eviction can remove all generations.
 A downloaded backup remains necessary. Import has a 20 MB file limit and needs
 enough free quota for staging; no cloud synchronization or automatic pruning.
+
+## v1.1 presets, Grand Staff and mobile input
+
+New configurations carry presetVersion 2 and noteDistribution. Historical
+unversioned configurations validate against the exact v1.0 preset definitions;
+validation never rewrites stored snapshots, attempt IDs or recognition IDs.
+Settings schema stays 1: Beginner/Staff defaults map to Basic on read and are
+written only on a later preference save. Compatible unknown fields survive.
+
+Learning schema stays 2. Grand Staff uses exerciseType grand-staff, clef grand
+in configuration and letter input. Records add pairEvidenceVersion 1 and pairs:
+immutable id/ordinal/createdAt and notes {treble, bass}. Each answer has pairId,
+the written pitch/clef, and itemIndex 0 (treble) or 1 (bass), independent of order.
+Both answers share questionId; each has its own unique attempt ID/ordinal.
+Validation checks parent definitions, range, pitch, duplicate hands and limits.
+Append-only merges and backups preserve/deduplicate pair definitions and attempts.
+
+Count limits mean pairs; a count-completed record has exactly twice that many
+attempts. Statistics still counts answered notes and additionally derives whole
+completed/partial pairs matching the selected evidence. Interrupted partial pairs
+retain their answer. Delayed results are withheld until pair review/session end.
+
+Response time starts at shared pair readiness and excludes pauses; the later
+answer includes reading/answering the other staff. Pair review adds no time.
+Activity is split equally between the two clefs, so combined duration is honest.
+Grand Staff contexts/mastery remain separate; the correct median target is 2000
+ms. Adaptive evidence additionally separates pair feedback modes. These times
+must not be treated as isolated note recognition. Existing mastery is unchanged.
+
+Extended distribution multiplies weights by 6 outside Basic and 3 on remaining
+notes outside the staff (otherwise 1). Random presets ignore evidence and select
+uniformly over C2–C6. All supported notes remain reachable. Structured sequences
+weight the start; random sequences weight every note. Compatibility keys retain
+legacy behavior; configuration comparisons distinguish the new preset semantics.
+
+Piano keyboard bounds/labels still describe the exercise; optional octaveMarkers
+are included in comparisons. Viewport changes and manual octave/staff pages are
+presentation state only and never reset clocks/questions or produce evidence.
+Use v1.1 or newer on both devices for Grand Staff backups.

@@ -416,7 +416,7 @@ Support the following clef configurations:
 
 \- Randomly alternating clefs.
 
-\- Grand staff in future exercises.
+\- Grand Staff paired note recognition (v1.1, letter input).
 
 
 
@@ -1160,7 +1160,7 @@ The first usable release shall include:
 
 
 
-Potential future features:
+Potential future features (Grand Staff paired notes are authorized in v1.1):
 
 
 
@@ -1174,7 +1174,7 @@ Potential future features:
 
 \- Rhythm training.
 
-\- Grand staff exercises.
+\- Grand Staff sequences and piano input.
 
 \- MIDI piano integration.
 

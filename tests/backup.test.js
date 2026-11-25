@@ -15,7 +15,7 @@ function fixture(){
 const backup=f=>createBackup(f.storage,f.learning.snapshot(),prefs.settings,BASE_TIME);
 test('export includes complete evidence, unknown preferences, versions and a dated filename',()=>{
  const f=fixture(),before=new Map(f.raw.values),value=backup(f);
- assert.equal(value.schemaVersion,1);assert.equal(value.learningSchemaVersion,2);assert.equal(value.appVersion,'1.0.0');
+ assert.equal(value.schemaVersion,1);assert.equal(value.learningSchemaVersion,2);assert.equal(value.appVersion,'1.1.0');
  assert.equal(value.data.sessions[0].attempts.length,1);assert.equal(value.data.preferences.settings.future,7);
  assert.match(backupFilename(value),/^notetrainer-backup-2026-11-24.*\.json$/);
  assert.deepEqual(f.raw.values,before);assert.deepEqual(validateBackup(JSON.stringify(value)),value);

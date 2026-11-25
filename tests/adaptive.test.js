@@ -80,7 +80,7 @@ test('adaptive random and structured sequences respect selected bounds and one c
   const c=config({exerciseType:'sequence',sequenceLength:16,sequenceStrategy:strategy,selectionMode:'adaptive'});
   const result=createSequenceGenerator(c,()=>.5,{getAttempts:()=>[],now:()=>BASE_TIME})();
   assert.equal(result.notes.length,16);
-  assert.ok(result.notes.every(n=>n.midi>=60&&n.midi<=72));
+  assert.ok(result.notes.every(n=>n.midi>=60&&n.midi<=77));
   if(strategy==='repeated')assert.equal(result.notes[0].midi,result.notes[1].midi);
   if(strategy==='stepwise')for(let i=1;i<16;i++)assert.ok(Math.abs(result.notes[i].midi-result.notes[i-1].midi)<=4);
  }
@@ -94,7 +94,7 @@ test('adaptive one-pitch ranges remain answerable for all modes',()=>{
 });
 test('weak-area analysis respects selected ranges and produces actionable, scoped recommendations',()=>{
  const c=config({clef:'treble'}),profiles=analyzePractice(c,[],BASE_TIME);
- assert.equal(profiles.length,8);assert.ok(profiles.every(p=>p.clef==='treble'&&p.reasons.includes('unseen')));
+ assert.equal(profiles.length,11);assert.ok(profiles.every(p=>p.clef==='treble'&&p.reasons.includes('unseen')));
  const html=recommendationMarkup(profiles,'czech');
  assert.match(html,/learn-weak/);assert.match(html,/learn-mistakes/);assert.match(html,/learn-adaptive/);
  assert.doesNotMatch(html,/NaN|Infinity|undefined/);
